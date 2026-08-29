@@ -15,6 +15,7 @@ import net.syllyaddons.economy.EconomyInput;
 import net.syllyaddons.economy.EconomyResult;
 import net.syllyaddons.economy.EconomyRules;
 import net.syllyaddons.economy.TerritoryEconomyInput;
+import net.syllyaddons.economy.UpgradeCatalog;
 import net.syllyaddons.routing.ObservedTerritoryGraphFactory;
 import net.syllyaddons.routing.OwnerTaxPolicy;
 import net.syllyaddons.routing.RouteDiagnostic;
@@ -55,20 +56,39 @@ public final class ObservedEconomyAnalyzer {
             return new SnapshotPayload(observed, null, diagnostics);
         }
 
+        GuildIdentity guild = state.guild().value();
         List<TerritoryEconomyInput> territoryInputs = new ArrayList<>();
         int missingResources = 0;
+        int missingUpgrades = 0;
+        int unknownUpgradeKeys = 0;
+        int invalidUpgradeLevels = 0;
         for (TerritoryState territory : state.territories().values().stream()
                 .sorted(java.util.Comparator.comparing(TerritoryState::name))
                 .toList()) {
+            if (!isOwnedBy(territory, guild)) continue;
             if (!territory.resources().isKnown()) {
                 missingResources++;
-                territoryInputs.add(new TerritoryEconomyInput(territory.name(), Map.of(), Map.of()));
-                continue;
             }
             Map<ResourceType, Double> production = new EnumMap<>(ResourceType.class);
-            territory.resources().value().forEach(
-                    (resource, balance) -> production.put(resource, (double) balance.generationPerHour()));
-            territoryInputs.add(new TerritoryEconomyInput(territory.name(), production, Map.of()));
+            if (territory.resources().isKnown()) {
+                territory.resources().value().forEach(
+                        (resource, balance) -> production.put(resource, (double) balance.generationPerHour()));
+            }
+            Map<ResourceType, Double> expenses = Map.of();
+            if (territory.upgrades().isKnown()) {
+                expenses = UpgradeCatalog.expensesPerHour(territory.upgrades().value());
+                unknownUpgradeKeys += (int) territory.upgrades().value().keySet().stream()
+                        .filter(key -> UpgradeCatalog.find(key).isEmpty())
+                        .count();
+                invalidUpgradeLevels += (int) territory.upgrades().value().entrySet().stream()
+                        .filter(entry -> UpgradeCatalog.find(entry.getKey())
+                                .map(definition -> !definition.isValidLevel(entry.getValue()))
+                                .orElse(false))
+                        .count();
+            } else {
+                missingUpgrades++;
+            }
+            territoryInputs.add(new TerritoryEconomyInput(territory.name(), production, expenses));
         }
 
         Map<ResourceType, Double> openingStorage = new EnumMap<>(ResourceType.class);
@@ -83,7 +103,6 @@ public final class ObservedEconomyAnalyzer {
                     "UNKNOWN_HQ_STORAGE", "HQ storage and capacity were not observed; zero is used for this estimate"));
         }
 
-        GuildIdentity guild = state.guild().value();
         java.util.Set<String> ownerIds = new java.util.HashSet<>();
         if (!guild.uuid().isBlank()) ownerIds.add(guild.uuid());
         if (!guild.name().isBlank()) ownerIds.add(guild.name());
@@ -101,9 +120,21 @@ public final class ObservedEconomyAnalyzer {
                 openingStorage,
                 storageLimits));
 
-        diagnostics.add(new RouteDiagnostic(
-                "EXPENSE_MODEL_UNAVAILABLE",
-                "Territory upgrade expenses are not yet observable, so expense totals are omitted"));
+        if (missingUpgrades > 0) {
+            diagnostics.add(new RouteDiagnostic(
+                    "UPGRADE_EXPENSES_INCOMPLETE",
+                    missingUpgrades + " owned territory/territories have no observed upgrade levels; expense checks are withheld"));
+        }
+        if (unknownUpgradeKeys > 0) {
+            diagnostics.add(new RouteDiagnostic(
+                    "UNKNOWN_UPGRADE_KEYS",
+                    unknownUpgradeKeys + " observed upgrade key(s) are absent from the Wynntils 4.2.8 catalog"));
+        }
+        if (invalidUpgradeLevels > 0) {
+            diagnostics.add(new RouteDiagnostic(
+                    "INVALID_UPGRADE_LEVELS",
+                    invalidUpgradeLevels + " observed upgrade level(s) are outside the Wynntils 4.2.8 catalog"));
+        }
         diagnostics.add(new RouteDiagnostic(
                 "ASSUMED_FOREIGN_TAX",
                 "Unobserved foreign-route tax is estimated at " + (int) (ASSUMED_FOREIGN_TAX_RATE * 100) + "%"));
@@ -113,5 +144,12 @@ public final class ObservedEconomyAnalyzer {
                     missingResources + " territory/territories have no observed production values"));
         }
         return new SnapshotPayload(observed, result, diagnostics);
+    }
+
+    private static boolean isOwnedBy(TerritoryState territory, GuildIdentity guild) {
+        if (!territory.owner().isKnown()) return false;
+        var owner = territory.owner().value();
+        return (!guild.uuid().isBlank() && guild.uuid().equals(owner.guildUuid()))
+                || (!guild.name().isBlank() && guild.name().equals(owner.guildName()));
     }
 }

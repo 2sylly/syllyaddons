@@ -3,9 +3,9 @@
 Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
-3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, and Track 5 portable snapshots
-and provenance inspection. It collects and analyses available state without issuing commands, clicking menus, or
-changing guild state.
+3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
+and provenance inspection, and the Track 6 explainable eco auditor. It collects and analyses available state without
+issuing commands, clicking menus, or changing guild state.
 
 ## Development setup
 
@@ -110,6 +110,21 @@ future schemas, corruption, oversized input, invalid enums, bad links, or unboun
 are optional, limited to once every five minutes, and prune only older `auto-` files according to the configured
 retention count. Manual exports are never automatically removed. See [the format specification](docs/TNSRECO_FORMAT.md).
 
+## Track 6 eco auditor
+
+Open **Settings → Eco Auditor → Open auditor** to inspect actionable findings. The report covers negative production,
+upkeep deficits, undelivered production, chokepoints, simultaneous overflow/deficit, storage/treasury risk, costly
+routes, dominated or low-value economic upgrades, and potentially safe one-level downgrades. Each finding keeps its
+formula, numeric inputs, affected territories, evidence age/source, known missing inputs, and production provenance.
+Findings with the same root cause are merged rather than repeated. Routed provenance can be highlighted on the
+Wynntils guild map.
+
+The passive territory-menu scan now supplies exact Wynntils 4.2.8 upgrade levels and version-pinned hourly costs.
+Expense-dependent checks are withheld until all owned territory upgrade lists are known. Tax, server spending order,
+cross-resource value, and upgrade strategic value remain explicit assumptions. Warning/critical findings produce one
+cooldown-controlled chat summary when the Eco Auditor setting is enabled. See
+[the auditor rule ledger](docs/ECO_AUDITOR_RULES.md).
+
 ## Safety
 
 Track 1 has no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
@@ -121,6 +136,8 @@ guild configuration. Container and advancement handlers consume post-observation
 - The routing-mode text recognizer is deliberately strict and still needs validation against the live HQ screen.
 - Track 4's route ordering, current tax semantics, delivery timing, expense order, and storage behavior still need
   side-by-side live golden captures before the engine can report exact server parity.
+- Track 6 upgrade recommendations compare observed marginal output or headroom against version-pinned upkeep. They do
+  not know player strategy, defence plans, treasury growth, or cross-resource market weights and are always advisory.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.
 - The official territory endpoint is needed for fields that Wynntils 4.2.8 downloads but does not retain in its public

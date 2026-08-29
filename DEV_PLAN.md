@@ -311,25 +311,25 @@ Acceptance gate:
 
 Implement checks incrementally:
 
-- [ ] Negative net production.
-- [ ] Unsustainable tower upkeep.
-- [ ] Production not reaching HQ.
-- [ ] Single-route and single-chokepoint fragility.
-- [ ] Simultaneous surplus and deficit patterns.
-- [ ] Storage and treasury risk.
-- [ ] Long or unnecessarily expensive routes.
-- [ ] Dominated economic upgrades.
-- [ ] Low-value upgrades.
-- [ ] Potentially safe downgrades.
+- [x] Negative net production.
+- [x] Unsustainable tower upkeep.
+- [x] Production not reaching HQ.
+- [x] Single-route and single-chokepoint fragility.
+- [x] Simultaneous surplus and deficit patterns.
+- [x] Storage and treasury risk.
+- [x] Long or unnecessarily expensive routes.
+- [x] Dominated economic upgrades.
+- [x] Low-value upgrades.
+- [x] Potentially safe downgrades.
 
 For every finding:
 
-- [ ] Include a short summary.
-- [ ] Include the arithmetic or route facts that caused it.
-- [ ] List affected territories.
-- [ ] Show freshness, evidence, and missing inputs.
-- [ ] Deduplicate findings that share the same root cause.
-- [ ] Link to provenance where relevant.
+- [x] Include a short summary.
+- [x] Include the arithmetic or route facts that caused it.
+- [x] List affected territories.
+- [x] Show freshness, evidence, and missing inputs.
+- [x] Deduplicate findings that share the same root cause.
+- [x] Link to provenance where relevant.
 
 Acceptance gate:
 

@@ -11,6 +11,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.syllyaddons.audit.EcoAuditNoticeGate;
+import net.syllyaddons.audit.EcoAuditor;
 import net.syllyaddons.compat.wynntils.v4_2_8.CompatibilityResult;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsCompatibilityGuard;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsCharacterCatalog;
@@ -85,6 +87,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
         installPersistence(repository, historicalStore);
         snapshotManagerService = createSnapshotManager(configDirectory, repository);
         installAutomaticSnapshots(repository, snapshotManagerService);
+        installEcoAuditNotices(repository);
         DebugScreenController.register(repository);
         RouteHighlightController.register();
         SpellProfileController.register(() -> spellProfileService);
@@ -220,6 +223,33 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 } catch (Exception exception) {
                     LOGGER.warn("Could not save automatic Track 5 snapshot", exception);
                 }
+            });
+        });
+    }
+
+    private void installEcoAuditNotices(ObservedStateRepository stateRepository) {
+        EcoAuditNoticeGate noticeGate = new EcoAuditNoticeGate();
+        EcoAuditor auditor = new EcoAuditor();
+        ObservedEconomyAnalyzer analyzer = new ObservedEconomyAnalyzer();
+        AtomicLong latestQueuedRevision = new AtomicLong(-1);
+        stateRepository.addListener(state -> {
+            if (!settingsService.snapshot().ecoAuditorEnabled()) return;
+            latestQueuedRevision.set(state.revision());
+            CompletableFuture.runAsync(() -> {
+                if (latestQueuedRevision.get() != state.revision()) return;
+                long now = System.currentTimeMillis();
+                var report = auditor.audit(analyzer.analyze(state, now), now);
+                if (latestQueuedRevision.get() != state.revision()
+                        || !settingsService.snapshot().ecoAuditorEnabled()) return;
+                int cooldown = settingsService.snapshot().ecoWarningCooldownSeconds();
+                noticeGate.next(report, now, cooldown).ifPresent(message -> {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    minecraft.execute(() -> {
+                        if (minecraft.player != null) {
+                            minecraft.player.displayClientMessage(Component.literal("[SyllyAddons] " + message), false);
+                        }
+                    });
+                });
             });
         });
     }

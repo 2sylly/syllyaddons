@@ -165,9 +165,17 @@ public final class SyllySettingsScreen extends Screen {
             case CHARACTERS -> buildCharacters();
             case ECO_AUDITOR -> {
                 SyllyConfig config = settings.snapshot();
+                addActionRow(
+                        "Audit report",
+                        "Inspect economic findings, exact arithmetic, freshness, missing inputs, and route provenance.",
+                        "Open auditor",
+                        () -> {
+                            if (minecraft != null) minecraft.setScreen(new EcoAuditorScreen(this, repository));
+                        },
+                        "eco audit report arithmetic provenance route findings freshness");
                 addBooleanRow(
                         "Eco Auditor",
-                        "Enable economic problem checks when Track 6 panels are active.",
+                        "Enable live economic checks and cooldown-controlled chat summaries.",
                         config.ecoAuditorEnabled(),
                         current -> current.withEcoAuditorEnabled(!current.ecoAuditorEnabled()),
                         current -> current.withEcoAuditorEnabled(SyllyConfig.defaults().ecoAuditorEnabled()),

@@ -21,6 +21,8 @@ class ResourceDrillDownServiceTest {
                 && value.route().equals(List.of("Mine", "HQ"))
                 && value.taxSteps().size() == 1));
         assertTrue(drillDown.diagnostics().stream()
+                .anyMatch(value -> value.code().equals("ASSUMED_FOREIGN_TAX")));
+        assertFalse(drillDown.diagnostics().stream()
                 .anyMatch(value -> value.code().equals("EXPENSE_MODEL_UNAVAILABLE")));
         assertFalse(drillDown.exact());
     }
