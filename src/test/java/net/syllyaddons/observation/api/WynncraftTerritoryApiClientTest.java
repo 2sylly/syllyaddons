@@ -1,10 +1,10 @@
 package net.syllyaddons.observation.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.util.List;
 import net.syllyaddons.domain.ResourceType;
 import net.syllyaddons.observation.ObservationBatch;
 import org.junit.jupiter.api.Test;
@@ -43,6 +43,6 @@ class WynncraftTerritoryApiClientTest {
         assertEquals("Spectral Cabbage", ragni.owner().value().guildName());
         assertEquals(-1748, ragni.bounds().value().minZ());
         assertEquals(3600, ragni.resources().value().get(ResourceType.EMERALDS).generationPerHour());
-        assertTrue(ragni.links().value().contains("Maltic"));
+        assertEquals(List.of("Katoa Ranch", "Maltic"), ragni.links().value());
     }
 }

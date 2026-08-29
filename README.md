@@ -2,9 +2,9 @@
 
 Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 
-The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, and the
-Track 3 configuration shell. It collects available state without issuing commands, clicking menus, or changing guild
-state.
+The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
+3 configuration shell, and the synthetic portion of Track 4's routing/economy truth engine. It collects and analyses
+available state without issuing commands, clicking menus, or changing guild state.
 
 ## Development setup
 
@@ -85,6 +85,18 @@ Settings are stored at `config/syllyaddons/settings.json`. Both settings and spe
 retain the previous readable file as `.bak`. A broken file is renamed with a `.corrupt-<timestamp>.json` suffix,
 replaced with safe defaults, and surfaced as an in-game warning.
 
+## Track 4 routing and economy engine
+
+Track 4 now has an immutable ordered territory graph, explicit topology diagnostics, Fastest and Cheapest candidate
+routes, tax and delivery-time accounting, same-owner reachability checks, and per-resource provenance through HQ
+expenses and storage. The engine is pure Java and covered by synthetic fixtures plus a small topology observation from
+Wynntils 4.2.8.
+
+The proposed server algorithm and economy semantics are still research assumptions. Results carry a rule version,
+confidence, and diagnostics and cannot be labelled exact under the default rules. See
+[the routing/economy rule ledger](docs/ROUTING_AND_ECONOMY_RULES.md) for the precise boundary and remaining live golden
+captures.
+
 ## Safety
 
 Track 1 has no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
@@ -94,6 +106,8 @@ guild configuration. Container and advancement handlers consume post-observation
 
 - The F8 data-status screen is intentionally a plain provenance inspector; it is also reachable from Compatibility.
 - The routing-mode text recognizer is deliberately strict and still needs validation against the live HQ screen.
+- Track 4's route ordering, current tax semantics, delivery timing, expense order, and storage behavior still need
+  side-by-side live golden captures before the engine can report exact server parity.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.
 - The official territory endpoint is needed for fields that Wynntils 4.2.8 downloads but does not retain in its public

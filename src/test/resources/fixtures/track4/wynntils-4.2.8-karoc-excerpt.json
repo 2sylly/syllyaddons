@@ -1,0 +1,29 @@
+{
+  "fixtureVersion": 1,
+  "capturedAtEpochMillis": 1787993368967,
+  "source": "wynntils-local-model",
+  "sourceVersion": "4.2.8",
+  "note": "Topology-only excerpt. Owner data was intentionally omitted. This is not a golden server-route fixture.",
+  "territories": [
+    {
+      "name": "Karoc Quarry",
+      "links": ["Llevigar", "Harnort Compound", "Shineridge Orc Camp"],
+      "bounds": {"minX": -1776, "minZ": -4524, "maxX": -1609, "maxZ": -4352}
+    },
+    {
+      "name": "Shineridge Orc Camp",
+      "links": ["Llevigar Farm", "Bucie Waterfall", "Loamsprout Orc Camp", "Karoc Quarry"],
+      "bounds": {"minX": -1776, "minZ": -4664, "maxX": -1609, "maxZ": -4526}
+    },
+    {
+      "name": "Harnort Compound",
+      "links": ["Bucie Waterfall", "Karoc Quarry"],
+      "bounds": {"minX": -1607, "minZ": -4524, "maxX": -1391, "maxZ": -4352}
+    },
+    {
+      "name": "Llevigar",
+      "links": ["Karoc Quarry", "Llevigar Gate", "Entrance to Gavel"],
+      "bounds": {"minX": -2171, "minZ": -4643, "maxX": -1800, "maxZ": -4405}
+    }
+  ]
+}

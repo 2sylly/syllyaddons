@@ -91,7 +91,7 @@ public final class WynntilsTerritoryAdapter {
                             null,
                             ObservedValue.known(info.isHeadquarters(), evidence),
                             null,
-                            ObservedValue.known(Set.copyOf(info.getTradingRoutes()), evidence),
+                            ObservedValue.known(List.copyOf(info.getTradingRoutes()), evidence),
                             ObservedValue.known(resources(info.getGenerators(), info.getStorage()), evidence),
                             rating(info.getTreasury(), evidence),
                             null,

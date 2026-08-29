@@ -3,7 +3,6 @@ package net.syllyaddons.domain;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public record TerritoryState(
         String name,
@@ -11,7 +10,7 @@ public record TerritoryState(
         ObservedValue<Long> acquiredAtEpochMillis,
         ObservedValue<Boolean> headquarters,
         ObservedValue<TerritoryBounds> bounds,
-        ObservedValue<Set<String>> links,
+        ObservedValue<List<String>> links,
         ObservedValue<Map<ResourceType, ResourceBalance>> resources,
         ObservedValue<TerritoryRating> treasury,
         ObservedValue<Double> treasuryBonusPercent,
@@ -26,7 +25,7 @@ public record TerritoryState(
         acquiredAtEpochMillis = Objects.requireNonNull(acquiredAtEpochMillis, "acquiredAtEpochMillis");
         headquarters = Objects.requireNonNull(headquarters, "headquarters");
         bounds = Objects.requireNonNull(bounds, "bounds");
-        links = copySet(Objects.requireNonNull(links, "links"));
+        links = copyList(Objects.requireNonNull(links, "links"));
         resources = copyMap(Objects.requireNonNull(resources, "resources"));
         treasury = Objects.requireNonNull(treasury, "treasury");
         treasuryBonusPercent = Objects.requireNonNull(treasuryBonusPercent, "treasuryBonusPercent");
@@ -49,11 +48,6 @@ public record TerritoryState(
                 ObservedValue.unknown("Defences have not been observed"),
                 ObservedValue.unknown("Upgrades have not been observed"),
                 ObservedValue.unknown("Alerts have not been observed"));
-    }
-
-    private static <E> ObservedValue<Set<E>> copySet(ObservedValue<Set<E>> value) {
-        if (!value.isKnown()) return value;
-        return ObservedValue.known(Set.copyOf(value.value()), value.evidence());
     }
 
     private static <K, V> ObservedValue<Map<K, V>> copyMap(ObservedValue<Map<K, V>> value) {

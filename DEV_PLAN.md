@@ -252,17 +252,17 @@ This is the critical research track. Correctness matters more than feature count
 
 Tasks:
 
-- [ ] Represent territory topology as an immutable graph.
-- [ ] Normalize asymmetric or temporarily missing links without hiding the anomaly.
-- [ ] Implement same-owner reachability as a diagnostic only, not as the final route calculation.
-- [ ] Document the known rules for Cheapest and Fastest modes.
-- [ ] Implement candidate route selection, delivery time, taxes, and tie-breaking.
-- [ ] Model production, storage, expenses, HQ delivery, and resource loss.
-- [ ] Build a provenance ledger that tracks every produced unit through route steps, taxes, destination, and spending.
-- [ ] Capture real observations as small versioned fixtures.
+- [x] Represent territory topology as an immutable graph.
+- [x] Normalize asymmetric or temporarily missing links without hiding the anomaly.
+- [x] Implement same-owner reachability as a diagnostic only, not as the final route calculation.
+- [x] Document the known rules for Cheapest and Fastest modes.
+- [x] Implement candidate route selection, delivery time, taxes, and tie-breaking.
+- [x] Model production, storage, expenses, HQ delivery, and resource loss.
+- [x] Build a provenance ledger that tracks every produced unit through route steps, taxes, destination, and spending.
+- [x] Capture real observations as small versioned fixtures.
 - [ ] Add golden tests comparing calculated totals/routes with observed Wynncraft values.
-- [ ] Surface disagreements as calculator diagnostics instead of concealing them.
-- [ ] Version the rules independently from the snapshot schema.
+- [x] Surface disagreements as calculator diagnostics instead of concealing them.
+- [x] Version the rules independently from the snapshot schema.
 
 Validation fixtures should cover:
 

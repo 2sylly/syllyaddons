@@ -3,7 +3,6 @@ package net.syllyaddons.observation;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import net.syllyaddons.domain.ObservedValue;
 import net.syllyaddons.domain.ResourceBalance;
 import net.syllyaddons.domain.ResourceType;
@@ -18,7 +17,7 @@ public record TerritoryObservation(
         ObservedValue<Long> acquiredAtEpochMillis,
         ObservedValue<Boolean> headquarters,
         ObservedValue<TerritoryBounds> bounds,
-        ObservedValue<Set<String>> links,
+        ObservedValue<List<String>> links,
         ObservedValue<Map<ResourceType, ResourceBalance>> resources,
         ObservedValue<TerritoryRating> treasury,
         ObservedValue<Double> treasuryBonusPercent,

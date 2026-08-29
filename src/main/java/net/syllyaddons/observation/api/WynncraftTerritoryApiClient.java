@@ -12,9 +12,11 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -101,7 +103,7 @@ public final class WynncraftTerritoryApiClient {
             ObservedValue<Long> acquired = parseAcquired(territory, exact);
             ObservedValue<Boolean> headquarters = booleanValue(territory, "hq", exact);
             ObservedValue<TerritoryBounds> bounds = parseBounds(territory, exact);
-            ObservedValue<Set<String>> links = parseLinks(territory, exact);
+            ObservedValue<List<String>> links = parseLinks(territory, exact);
             ObservedValue<Map<ResourceType, ResourceBalance>> resources =
                     parseResources(territory, delayedResources);
             ObservedValue<TerritoryRating> treasury = parseRating(territory, "treasury", exact);
@@ -174,14 +176,17 @@ public final class WynncraftTerritoryApiClient {
                 evidence);
     }
 
-    private static ObservedValue<Set<String>> parseLinks(JsonObject territory, Evidence evidence) {
+    private static ObservedValue<List<String>> parseLinks(JsonObject territory, Evidence evidence) {
         JsonArray links = arrayOrNull(territory, "links");
         if (links == null) return null;
-        Set<String> values = new HashSet<>();
+        List<String> values = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         for (JsonElement link : links) {
-            if (!link.isJsonNull()) values.add(link.getAsString());
+            if (link.isJsonNull()) continue;
+            String name = link.getAsString();
+            if (seen.add(name)) values.add(name);
         }
-        return ObservedValue.known(Set.copyOf(values), evidence);
+        return ObservedValue.known(List.copyOf(values), evidence);
     }
 
     private static ObservedValue<Map<ResourceType, ResourceBalance>> parseResources(
