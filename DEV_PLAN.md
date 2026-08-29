@@ -391,18 +391,21 @@ Acceptance gate:
 
 Tasks:
 
-- [ ] Identify the passive event or screen state that reliably exposes the prospective target.
-- [ ] Determine or capture attack cost and timer inputs without clicking or queueing.
-- [ ] Calculate both modes using the validated routing rules.
-- [ ] Show time saved and additional cost.
-- [ ] Detect when Cheapest is preferable for negligible delay.
-- [ ] Add minimum saving, maximum extra cost, active-operation-only, and significance thresholds.
-- [ ] Mark results unavailable when required inputs are not observable.
+- [x] Identify the passive event or screen state that reliably exposes the prospective target.
+- [x] Determine or capture attack cost and timer inputs without clicking or queueing.
+- [x] Calculate both modes using the versioned routing rules and label research inputs.
+- [x] Show time saved and additional cost.
+- [x] Detect when Cheapest is preferable for negligible delay.
+- [x] Add minimum saving, maximum extra cost, active-operation-only, and significance thresholds.
+- [x] Mark results unavailable when required inputs are not observable or current-route validation disagrees.
 
 Acceptance gate:
 
 - Advice matches several manually checked attack preparations.
 - No advisor path sends a click, command, or packet that changes attack state.
+
+Implementation status: parser, comparison, refusal, settings, and source-level safety paths are automated; several live
+attack preparations on the pinned client remain the manual acceptance check.
 
 ### Track 10 — Defence-sustainability optimizer
 

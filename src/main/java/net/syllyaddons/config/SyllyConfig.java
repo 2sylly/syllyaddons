@@ -19,6 +19,7 @@ public record SyllyConfig(
         boolean impactAlertSound,
         ImpactSeverity impactAlertMinimumSeverity,
         boolean routingAdvisorEnabled,
+        RoutingAdvisorConfig routingAdvisor,
         boolean optimizerEnabled,
         boolean automaticSnapshotsEnabled,
         int snapshotRetention,
@@ -44,6 +45,7 @@ public record SyllyConfig(
         impactAlertSize = Objects.requireNonNull(impactAlertSize, "impactAlertSize");
         impactAlertMinimumSeverity = Objects.requireNonNull(
                 impactAlertMinimumSeverity, "impactAlertMinimumSeverity");
+        routingAdvisor = Objects.requireNonNull(routingAdvisor, "routingAdvisor");
         if (ecoWarningCooldownSeconds < MIN_ECO_WARNING_COOLDOWN_SECONDS
                 || ecoWarningCooldownSeconds > MAX_ECO_WARNING_COOLDOWN_SECONDS) {
             throw new IllegalArgumentException("Eco warning cooldown must be between "
@@ -70,14 +72,14 @@ public record SyllyConfig(
                 CURRENT_SCHEMA_VERSION, true, 30, true,
                 true, ImpactOverlayScope.OWN_GUILD, "", false, ImpactResourceFilter.ALL, 0,
                 ImpactAlertSize.MEDIUM, 8, true, ImpactSeverity.WARNING,
-                true, true, false, 20, true, true);
+                true, RoutingAdvisorConfig.defaults(), true, false, 20, true, true);
     }
 
     public SyllyConfig withEcoAuditorEnabled(boolean value) {
         return copy(value, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -85,7 +87,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, value, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -93,7 +95,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, value, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -101,7 +103,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, value,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -109,7 +111,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 value, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -117,7 +119,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, value, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -125,7 +127,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, value, impactResourceFilter, impactMinimumDelaySeconds,
                 impactAlertSize, impactAlertDurationSeconds, impactAlertSound, impactAlertMinimumSeverity,
-                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
                 profileSwapNotifications, configurationWarnings);
     }
 
@@ -133,7 +135,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, value, impactMinimumDelaySeconds,
                 impactAlertSize, impactAlertDurationSeconds, impactAlertSound, impactAlertMinimumSeverity,
-                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
                 profileSwapNotifications, configurationWarnings);
     }
 
@@ -141,7 +143,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter, value,
                 impactAlertSize, impactAlertDurationSeconds, impactAlertSound, impactAlertMinimumSeverity,
-                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
                 profileSwapNotifications, configurationWarnings);
     }
 
@@ -149,7 +151,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, value, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -157,7 +159,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, value, impactAlertSound, impactAlertMinimumSeverity,
-                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
                 profileSwapNotifications, configurationWarnings);
     }
 
@@ -165,7 +167,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, value,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -173,7 +175,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound, value,
-                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
                 profileSwapNotifications, configurationWarnings);
     }
 
@@ -181,7 +183,16 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, value, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                impactAlertMinimumSeverity, value, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withRoutingAdvisor(RoutingAdvisorConfig value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, Objects.requireNonNull(value, "value"),
+                optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
                 profileSwapNotifications, configurationWarnings);
     }
 
@@ -189,7 +200,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, value, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, value, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
@@ -197,7 +208,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, value, snapshotRetention,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, value, snapshotRetention,
                 profileSwapNotifications, configurationWarnings);
     }
 
@@ -205,7 +216,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 value, profileSwapNotifications, configurationWarnings);
     }
 
@@ -213,7 +224,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, value, configurationWarnings);
     }
 
@@ -221,7 +232,7 @@ public record SyllyConfig(
         return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
                 impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
                 impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
-                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, routingAdvisor, optimizerEnabled, automaticSnapshotsEnabled,
                 snapshotRetention, profileSwapNotifications, value);
     }
 
@@ -242,7 +253,8 @@ public record SyllyConfig(
                     .withImpactAlertDurationSeconds(defaults.impactAlertDurationSeconds())
                     .withImpactAlertSound(defaults.impactAlertSound())
                     .withImpactAlertMinimumSeverity(defaults.impactAlertMinimumSeverity());
-            case ROUTING_ADVISOR -> withRoutingAdvisorEnabled(defaults.routingAdvisorEnabled());
+            case ROUTING_ADVISOR -> withRoutingAdvisorEnabled(defaults.routingAdvisorEnabled())
+                    .withRoutingAdvisor(defaults.routingAdvisor());
             case OPTIMIZER -> withOptimizerEnabled(defaults.optimizerEnabled());
             case SNAPSHOTS -> withAutomaticSnapshotsEnabled(defaults.automaticSnapshotsEnabled())
                     .withSnapshotRetention(defaults.snapshotRetention());
@@ -267,6 +279,7 @@ public record SyllyConfig(
             boolean nextImpactAlertSound,
             ImpactSeverity nextImpactAlertMinimumSeverity,
             boolean nextRoutingAdvisorEnabled,
+            RoutingAdvisorConfig nextRoutingAdvisor,
             boolean nextOptimizerEnabled,
             boolean nextAutomaticSnapshotsEnabled,
             int nextSnapshotRetention,
@@ -278,7 +291,7 @@ public record SyllyConfig(
                 nextImpactSelectedEnemy, nextImpactDisconnectionsOnly, nextImpactResourceFilter,
                 nextImpactMinimumDelaySeconds, nextImpactAlertSize, nextImpactAlertDurationSeconds,
                 nextImpactAlertSound, nextImpactAlertMinimumSeverity, nextRoutingAdvisorEnabled,
-                nextOptimizerEnabled, nextAutomaticSnapshotsEnabled, nextSnapshotRetention,
+                nextRoutingAdvisor, nextOptimizerEnabled, nextAutomaticSnapshotsEnabled, nextSnapshotRetention,
                 nextProfileSwapNotifications, nextConfigurationWarnings);
     }
 }

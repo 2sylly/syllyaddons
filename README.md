@@ -5,7 +5,7 @@ Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
 3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
 and provenance inspection, the Track 6 explainable eco auditor, the Track 7 cached territory-removal simulator, and
-Track 8 map overlays and refresh-aware loss alerts. It
+Track 8 map overlays and refresh-aware loss alerts, and the Track 9 passive attack-routing advisor. It
 collects and analyses available state without issuing commands, clicking menus, or changing guild state.
 
 ## Development setup
@@ -157,9 +157,22 @@ baseline age and the interval between the two observations, and labels the resul
 an exact loss timestamp. Character/world or guild boundaries clear queued alerts. See
 [the map and alert evidence rules](docs/MAP_OVERLAYS_AND_ALERTS.md).
 
+## Track 9 attack-routing advisor
+
+Open a normal Wynncraft `Attacking: <territory>` menu to see a read-only comparison of Cheapest and Fastest. The panel
+shows each route's timer, emerald cost, hop count, Fastest's time saving and additional cost, and a threshold-based
+recommendation. The current routing mode's cost and timer are read from the already-open menu. The other mode's cost
+uses the versioned Track 4 route plus the explicitly labelled 70% foreign-tax research fallback.
+
+Settings → Routing Advisor controls the minimum worthwhile time saving, maximum additional cost, active-operation-only
+display, and negligible time/cost thresholds. If target, cost, timer, guild, HQ, routing mode, topology, or a consistent
+current route cannot be observed, the panel says the recommendation is unavailable. When the player queues a war
+themselves, Wynntils' resulting timer event is compared with the displayed timer for ten seconds; it is never used to
+queue anything. See [the advisor evidence and safety rules](docs/ATTACK_ROUTING_ADVISOR.md).
+
 ## Safety
 
-Tracks 1–8 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
+Tracks 1–9 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
 guild configuration. Container and advancement handlers consume post-observation events only.
 
 ## Current limitations
@@ -174,6 +187,9 @@ guild configuration. Container and advancement handlers consume post-observation
   production, tower supply, and strategic intent remain unavailable and cannot appear as exact.
 - Track 8 map colours and alerts are snapshots of the most recent completed cache. A loss can occur anywhere inside
   the displayed observation window; if the exact pre-loss cache entry is missing, no alert is shown.
+- Track 9 requires the live attack menu to expose a parseable cost and timer. The alternate route cost remains an
+  estimate until diplomacy/tax values and server route parity have live golden captures; any current-timer or displayed
+  route disagreement disables the recommendation instead of relaxing the guard.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.
 - The official territory endpoint is needed for fields that Wynntils 4.2.8 downloads but does not retain in its public

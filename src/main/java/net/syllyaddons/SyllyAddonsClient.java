@@ -13,16 +13,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.syllyaddons.audit.EcoAuditNoticeGate;
 import net.syllyaddons.audit.EcoAuditor;
+import net.syllyaddons.advisor.AttackAdvisorService;
 import net.syllyaddons.compat.wynntils.v4_2_8.CompatibilityResult;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsCompatibilityGuard;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsCharacterCatalog;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsObservationListener;
+import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsAttackAdvisorListener;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsRoutingModeAdapter;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSessionAdapter;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSpellAdapter;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSpellInputListener;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsTerritoryAdapter;
 import net.syllyaddons.client.gui.DebugScreenController;
+import net.syllyaddons.client.gui.AttackAdvisorOverlayController;
 import net.syllyaddons.client.gui.ImpactAlertController;
 import net.syllyaddons.client.gui.RouteHighlightController;
 import net.syllyaddons.client.gui.SpellProfileController;
@@ -56,11 +59,13 @@ public final class SyllyAddonsClient implements ClientModInitializer {
 
     private static ObservedStateRepository repository;
     private WynntilsObservationListener observationListener;
+    private WynntilsAttackAdvisorListener attackAdvisorListener;
     private WynntilsSpellInputListener spellInputListener;
     private SpellProfileService spellProfileService;
     private SyllyConfigService settingsService;
     private SnapshotManagerService snapshotManagerService;
     private TerritoryImpactCache territoryImpactCache;
+    private AttackAdvisorService attackAdvisorService;
     private boolean observationPipelineStarted;
 
     @Override
@@ -101,6 +106,8 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 () -> territoryImpactCache,
                 () -> settingsService);
         RouteHighlightController.register();
+        attackAdvisorService = new AttackAdvisorService(repository, settingsService);
+        AttackAdvisorOverlayController.register(() -> attackAdvisorService, () -> settingsService);
         SpellProfileController.register(() -> spellProfileService);
         SyllySettingsController.register(
                 () -> settingsService,
@@ -130,6 +137,8 @@ public final class SyllyAddonsClient implements ClientModInitializer {
         if (observationPipelineStarted) return;
         try {
             WynntilsMod.registerEventListener(observationListener);
+            attackAdvisorListener = new WynntilsAttackAdvisorListener(attackAdvisorService, LOGGER);
+            WynntilsMod.registerEventListener(attackAdvisorListener);
             observationPipelineStarted = true;
             observationListener.captureInitialState();
             LOGGER.info("Track 1 observation pipeline initialized");
@@ -158,6 +167,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
             spellInputListener = new WynntilsSpellInputListener(spellProfileService);
             WynntilsMod.registerEventListener(spellInputListener);
             LOGGER.info("Track 2 spell profile pipeline initialized");
+            LOGGER.info("Track 9 passive attack-routing advisor initialized");
         } catch (RuntimeException exception) {
             LOGGER.error("Could not attach Sylly Addons pipelines to Wynntils", exception);
         }
