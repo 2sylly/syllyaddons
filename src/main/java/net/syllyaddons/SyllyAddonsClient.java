@@ -3,6 +3,8 @@ package net.syllyaddons;
 import com.wynntils.core.WynntilsMod;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -19,6 +21,7 @@ import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSpellAdapter;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSpellInputListener;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsTerritoryAdapter;
 import net.syllyaddons.client.gui.DebugScreenController;
+import net.syllyaddons.client.gui.RouteHighlightController;
 import net.syllyaddons.client.gui.SpellProfileController;
 import net.syllyaddons.client.gui.SyllySettingsController;
 import net.syllyaddons.config.SyllyConfigService;
@@ -31,6 +34,13 @@ import net.syllyaddons.persistence.HistoricalObservationStore;
 import net.syllyaddons.persistence.ObservedStateJsonCodec;
 import net.syllyaddons.profile.SpellProfileService;
 import net.syllyaddons.profile.SpellProfileStore;
+import net.syllyaddons.snapshot.ObservedEconomyAnalyzer;
+import net.syllyaddons.snapshot.SnapshotArchiveCodec;
+import net.syllyaddons.snapshot.SnapshotArchiveStore;
+import net.syllyaddons.snapshot.SnapshotArchiveValidator;
+import net.syllyaddons.snapshot.SnapshotCaptureService;
+import net.syllyaddons.snapshot.SnapshotComparisonService;
+import net.syllyaddons.snapshot.SnapshotManagerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +54,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
     private WynntilsSpellInputListener spellInputListener;
     private SpellProfileService spellProfileService;
     private SyllyConfigService settingsService;
+    private SnapshotManagerService snapshotManagerService;
     private boolean observationPipelineStarted;
 
     @Override
@@ -72,9 +83,16 @@ public final class SyllyAddonsClient implements ClientModInitializer {
             repository.clearSession(System.currentTimeMillis(), "Loaded historical data; waiting for a live session");
         }
         installPersistence(repository, historicalStore);
+        snapshotManagerService = createSnapshotManager(configDirectory, repository);
+        installAutomaticSnapshots(repository, snapshotManagerService);
         DebugScreenController.register(repository);
+        RouteHighlightController.register();
         SpellProfileController.register(() -> spellProfileService);
-        SyllySettingsController.register(() -> settingsService, () -> spellProfileService, () -> repository);
+        SyllySettingsController.register(
+                () -> settingsService,
+                () -> spellProfileService,
+                () -> repository,
+                () -> snapshotManagerService);
 
         observationListener = new WynntilsObservationListener(
                 repository,
@@ -169,5 +187,47 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 LOGGER.warn("Could not persist the latest observed state", exception);
             }
         });
+    }
+
+    private SnapshotManagerService createSnapshotManager(
+            Path configDirectory, ObservedStateRepository stateRepository) {
+        SnapshotArchiveValidator validator = new SnapshotArchiveValidator();
+        return new SnapshotManagerService(
+                configDirectory.resolve("snapshots"),
+                stateRepository,
+                new SnapshotArchiveStore(new SnapshotArchiveCodec(validator)),
+                new SnapshotCaptureService(new ObservedEconomyAnalyzer()),
+                new SnapshotComparisonService(),
+                Map.of(
+                        "minecraft", installedVersion("minecraft"),
+                        "wynntils", installedVersion("wynntils"),
+                        "syllyaddons", installedVersion(MOD_ID),
+                        "snapshotFormat", "1",
+                        "routingRules", "routing-research-2026-08-29.1",
+                        "economyRules", "economy-research-2026-08-29.1"));
+    }
+
+    private void installAutomaticSnapshots(
+            ObservedStateRepository stateRepository, SnapshotManagerService manager) {
+        stateRepository.addListener(state -> {
+            if (!settingsService.snapshot().automaticSnapshotsEnabled()) return;
+            long now = System.currentTimeMillis();
+            int retention = settingsService.snapshot().snapshotRetention();
+            CompletableFuture.runAsync(() -> {
+                try {
+                    manager.exportAutomaticIfDue(now, retention).ifPresent(path ->
+                            LOGGER.info("Saved automatic Track 5 snapshot {}", path.getFileName()));
+                } catch (Exception exception) {
+                    LOGGER.warn("Could not save automatic Track 5 snapshot", exception);
+                }
+            });
+        });
+    }
+
+    private static String installedVersion(String modId) {
+        return FabricLoader.getInstance()
+                .getModContainer(modId)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString())
+                .orElse("unknown");
     }
 }

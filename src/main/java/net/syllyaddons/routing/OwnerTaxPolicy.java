@@ -2,11 +2,19 @@ package net.syllyaddons.routing;
 
 /** Research fallback until live diplomacy/tax values are observable. */
 public final class OwnerTaxPolicy implements RouteTaxPolicy {
-    private final String ownerId;
+    private final java.util.Set<String> ownerIds;
     private final double foreignRate;
 
     public OwnerTaxPolicy(String ownerId, double foreignRate) {
-        this.ownerId = ownerId == null ? "" : ownerId.strip();
+        this(ownerId == null || ownerId.isBlank() ? java.util.Set.of() : java.util.Set.of(ownerId), foreignRate);
+    }
+
+    public OwnerTaxPolicy(java.util.Set<String> ownerIds, double foreignRate) {
+        java.util.Set<String> normalized = new java.util.HashSet<>();
+        for (String ownerId : java.util.Objects.requireNonNull(ownerIds, "ownerIds")) {
+            if (ownerId != null && !ownerId.isBlank()) normalized.add(ownerId.strip());
+        }
+        this.ownerIds = java.util.Set.copyOf(normalized);
         if (!Double.isFinite(foreignRate) || foreignRate < 0 || foreignRate > 1) {
             throw new IllegalArgumentException("Foreign tax rate must be between 0 and 1");
         }
@@ -15,7 +23,7 @@ public final class OwnerTaxPolicy implements RouteTaxPolicy {
 
     @Override
     public TaxQuote quote(TerritoryNode from, TerritoryNode to) {
-        boolean own = !ownerId.isBlank() && ownerId.equals(to.ownerId());
+        boolean own = ownerIds.contains(to.ownerId());
         return new TaxQuote(
                 own ? 0 : foreignRate,
                 RuleConfidence.RESEARCH_ASSUMPTION,

@@ -19,6 +19,7 @@ import net.syllyaddons.config.SyllyConfigSection;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.observation.ObservedStateRepository;
 import net.syllyaddons.profile.SpellProfileService;
+import net.syllyaddons.snapshot.SnapshotManagerService;
 
 /** Track 3 configuration shell. Feature switches are persisted immediately after validation. */
 public final class SyllySettingsScreen extends Screen {
@@ -36,6 +37,7 @@ public final class SyllySettingsScreen extends Screen {
     private final SyllyConfigService settings;
     private final java.util.function.Supplier<SpellProfileService> profilesSupplier;
     private final ObservedStateRepository repository;
+    private final SnapshotManagerService snapshotManager;
     private final Map<SyllyConfigSection, Button> sectionButtons = new EnumMap<>(SyllyConfigSection.class);
     private final List<SettingRow> rows = new ArrayList<>();
 
@@ -51,12 +53,14 @@ public final class SyllySettingsScreen extends Screen {
             Screen parent,
             SyllyConfigService settings,
             java.util.function.Supplier<SpellProfileService> profilesSupplier,
-            ObservedStateRepository repository) {
+            ObservedStateRepository repository,
+            SnapshotManagerService snapshotManager) {
         super(Component.translatable("screen.syllyaddons.settings"));
         this.parent = parent;
         this.settings = Objects.requireNonNull(settings, "settings");
         this.profilesSupplier = Objects.requireNonNull(profilesSupplier, "profilesSupplier");
         this.repository = Objects.requireNonNull(repository, "repository");
+        this.snapshotManager = Objects.requireNonNull(snapshotManager, "snapshotManager");
     }
 
     @Override
@@ -202,6 +206,14 @@ public final class SyllySettingsScreen extends Screen {
                     "optimizer enabled optimization");
             case SNAPSHOTS -> {
                 SyllyConfig config = settings.snapshot();
+                addActionRow(
+                        "Snapshot manager",
+                        "Export, import read-only, compare, and inspect resource provenance.",
+                        "Open snapshots",
+                        () -> {
+                            if (minecraft != null) minecraft.setScreen(new SnapshotManagerScreen(this, snapshotManager));
+                        },
+                        "snapshot manager export import compare provenance tnsreco");
                 addBooleanRow(
                         "Automatic snapshots",
                         "Allow automatic historical snapshots when Track 5 storage is active.",

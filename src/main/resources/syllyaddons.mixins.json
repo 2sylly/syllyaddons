@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "net.syllyaddons.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "AbstractMapScreenAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

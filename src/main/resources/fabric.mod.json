@@ -16,6 +16,9 @@
       "net.syllyaddons.client.gui.SyllyModMenuApi"
     ]
   },
+  "mixins": [
+    "syllyaddons.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": "*",

@@ -289,15 +289,15 @@ Acceptance gate:
 
 Tasks:
 
-- [ ] Define versioned `.tnsreco` JSON.
-- [ ] Export atomically with format version, creation time, source versions, and checksum.
-- [ ] Import into a read-only context.
-- [ ] Validate sizes, schema, enum values, links, and numeric bounds defensively.
-- [ ] Add migrations only when the format first changes.
-- [ ] Add current-versus-snapshot comparison.
-- [ ] Build resource-total drill-down by production and expense.
-- [ ] Show source territory, complete route, taxes, time, destination, and consumers.
-- [ ] Highlight an inspected route on the map.
+- [x] Define versioned `.tnsreco` JSON.
+- [x] Export atomically with format version, creation time, source versions, and checksum.
+- [x] Import into a read-only context.
+- [x] Validate sizes, schema, enum values, links, and numeric bounds defensively.
+- [x] Add migrations only when the format first changes. (Version 1 has no predecessor to migrate.)
+- [x] Add current-versus-snapshot comparison.
+- [x] Build resource-total drill-down by production and expense.
+- [x] Show source territory, complete route, taxes, time, destination, and consumers.
+- [x] Highlight an inspected route on the map.
 
 Acceptance gate:
 

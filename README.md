@@ -3,8 +3,9 @@
 Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
-3 configuration shell, and the synthetic portion of Track 4's routing/economy truth engine. It collects and analyses
-available state without issuing commands, clicking menus, or changing guild state.
+3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, and Track 5 portable snapshots
+and provenance inspection. It collects and analyses available state without issuing commands, clicking menus, or
+changing guild state.
 
 ## Development setup
 
@@ -96,6 +97,18 @@ The proposed server algorithm and economy semantics are still research assumptio
 confidence, and diagnostics and cannot be labelled exact under the default rules. See
 [the routing/economy rule ledger](docs/ROUTING_AND_ECONOMY_RULES.md) for the precise boundary and remaining live golden
 captures.
+
+## Track 5 snapshots and provenance
+
+Open **Settings → Snapshots → Open snapshots** to export the current state, import local `.tnsreco` files read-only,
+compare them with current observations, and inspect resource provenance by source. The inspector shows the complete
+route, per-step tax, delivery time, HQ destination, consumers, storage, overflow, confidence, and diagnostics. **Show
+on map** opens Wynntils' guild map with the inspected route highlighted.
+
+Snapshots include source/rule versions and a canonical SHA-256 checksum, are replaced atomically, and are rejected for
+future schemas, corruption, oversized input, invalid enums, bad links, or unbounded numeric data. Automatic snapshots
+are optional, limited to once every five minutes, and prune only older `auto-` files according to the configured
+retention count. Manual exports are never automatically removed. See [the format specification](docs/TNSRECO_FORMAT.md).
 
 ## Safety
 

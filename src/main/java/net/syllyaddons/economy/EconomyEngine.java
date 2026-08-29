@@ -158,6 +158,7 @@ public final class EconomyEngine {
                 route.path(),
                 taxes,
                 current,
+                route.deliverySeconds(),
                 route.confidence(),
                 route.diagnostics());
     }
@@ -241,6 +242,7 @@ public final class EconomyEngine {
         private final List<String> route;
         private final List<TaxLedgerStep> taxSteps;
         private final double delivered;
+        private final long deliverySeconds;
         private final double undelivered;
         private final RuleConfidence confidence;
         private final List<RouteDiagnostic> diagnostics;
@@ -257,6 +259,7 @@ public final class EconomyEngine {
                 List<String> route,
                 List<TaxLedgerStep> taxSteps,
                 double delivered,
+                long deliverySeconds,
                 double undelivered,
                 RuleConfidence confidence,
                 List<RouteDiagnostic> diagnostics) {
@@ -267,6 +270,7 @@ public final class EconomyEngine {
             this.route = List.copyOf(route);
             this.taxSteps = List.copyOf(taxSteps);
             this.delivered = delivered;
+            this.deliverySeconds = deliverySeconds;
             this.undelivered = undelivered;
             this.confidence = confidence;
             this.diagnostics = List.copyOf(diagnostics);
@@ -284,6 +288,7 @@ public final class EconomyEngine {
                     List.of(),
                     amount,
                     0,
+                    0,
                     confidence,
                     List.of());
         }
@@ -295,6 +300,7 @@ public final class EconomyEngine {
                 List<String> route,
                 List<TaxLedgerStep> taxes,
                 double delivered,
+                long deliverySeconds,
                 RuleConfidence confidence,
                 List<RouteDiagnostic> diagnostics) {
             return new MutableLot(
@@ -305,6 +311,7 @@ public final class EconomyEngine {
                     route,
                     taxes,
                     delivered,
+                    deliverySeconds,
                     0,
                     confidence,
                     diagnostics);
@@ -324,6 +331,7 @@ public final class EconomyEngine {
                     List.of(),
                     List.of(),
                     0,
+                    0,
                     amount,
                     confidence,
                     diagnostics);
@@ -340,6 +348,7 @@ public final class EconomyEngine {
                     taxSteps,
                     taxLoss,
                     delivered,
+                    deliverySeconds,
                     spending,
                     stored,
                     overflow,

@@ -14,6 +14,7 @@ public record ResourceProvenance(
         List<TaxLedgerStep> taxSteps,
         double taxLoss,
         double deliveredToHq,
+        long deliverySeconds,
         List<SpendingAllocation> spending,
         double storedAtHq,
         double overflowLoss,
