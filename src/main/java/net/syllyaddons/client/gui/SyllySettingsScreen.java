@@ -17,9 +17,11 @@ import net.minecraft.network.chat.Component;
 import net.syllyaddons.config.SyllyConfig;
 import net.syllyaddons.config.SyllyConfigSection;
 import net.syllyaddons.config.SyllyConfigService;
+import net.syllyaddons.config.OptimizerConfig;
 import net.syllyaddons.config.RoutingAdvisorConfig;
 import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateRepository;
+import net.syllyaddons.optimizer.OptimizerService;
 import net.syllyaddons.profile.SpellProfileService;
 import net.syllyaddons.snapshot.SnapshotManagerService;
 
@@ -41,6 +43,7 @@ public final class SyllySettingsScreen extends Screen {
     private final ObservedStateRepository repository;
     private final SnapshotManagerService snapshotManager;
     private final TerritoryImpactCache territoryImpactCache;
+    private final OptimizerService optimizerService;
     private final Map<SyllyConfigSection, Button> sectionButtons = new EnumMap<>(SyllyConfigSection.class);
     private final List<SettingRow> rows = new ArrayList<>();
 
@@ -58,7 +61,8 @@ public final class SyllySettingsScreen extends Screen {
             java.util.function.Supplier<SpellProfileService> profilesSupplier,
             ObservedStateRepository repository,
             SnapshotManagerService snapshotManager,
-            TerritoryImpactCache territoryImpactCache) {
+            TerritoryImpactCache territoryImpactCache,
+            OptimizerService optimizerService) {
         super(Component.translatable("screen.syllyaddons.settings"));
         this.parent = parent;
         this.settings = Objects.requireNonNull(settings, "settings");
@@ -66,6 +70,7 @@ public final class SyllySettingsScreen extends Screen {
         this.repository = Objects.requireNonNull(repository, "repository");
         this.snapshotManager = Objects.requireNonNull(snapshotManager, "snapshotManager");
         this.territoryImpactCache = Objects.requireNonNull(territoryImpactCache, "territoryImpactCache");
+        this.optimizerService = Objects.requireNonNull(optimizerService, "optimizerService");
     }
 
     @Override
@@ -288,13 +293,66 @@ public final class SyllySettingsScreen extends Screen {
                                 RoutingAdvisorConfig.defaults().insignificantCostEmeralds())),
                         "negligible insignificant cost emeralds threshold");
             }
-            case OPTIMIZER -> addBooleanRow(
-                    "Optimizer",
-                    "Enable bounded optimization tools when Track 10 is active.",
-                    settings.snapshot().optimizerEnabled(),
-                    current -> current.withOptimizerEnabled(!current.optimizerEnabled()),
-                    current -> current.withOptimizerEnabled(SyllyConfig.defaults().optimizerEnabled()),
-                    "optimizer enabled optimization");
+            case OPTIMIZER -> {
+                SyllyConfig config = settings.snapshot();
+                OptimizerConfig optimizer = config.optimizer();
+                addActionRow(
+                        "Defence optimizer",
+                        "Run a bounded read-only search and inspect its manual downgrade checklist.",
+                        "Open optimizer",
+                        () -> {
+                            if (minecraft != null) minecraft.setScreen(
+                                    new DefenceOptimizerScreen(this, optimizerService, settings));
+                        },
+                        "defence sustainability optimizer manual checklist no apply");
+                addBooleanRow(
+                        "Optimizer",
+                        "Enable bounded read-only economy optimization.",
+                        config.optimizerEnabled(),
+                        current -> current.withOptimizerEnabled(!current.optimizerEnabled()),
+                        current -> current.withOptimizerEnabled(SyllyConfig.defaults().optimizerEnabled()),
+                        "optimizer enabled optimization bounded read only");
+                addIntegerRow(
+                        "Reserve floor",
+                        "Minimum ending reserve as a percent of currently observed HQ storage (0-100).",
+                        optimizer.reserveFloorPercent(),
+                        OptimizerConfig.MIN_RESERVE_PERCENT,
+                        OptimizerConfig.MAX_RESERVE_PERCENT,
+                        (current, value) -> current.withOptimizer(
+                                current.optimizer().withReserveFloorPercent(value)),
+                        current -> current.withOptimizer(current.optimizer().withReserveFloorPercent(
+                                OptimizerConfig.defaults().reserveFloorPercent())),
+                        "reserve floor percent hq storage constraint");
+                addBooleanRow(
+                        "Require no deficits",
+                        "Reject candidates with any unfunded hourly upkeep.",
+                        optimizer.requireNoDeficits(),
+                        current -> current.withOptimizer(current.optimizer().withRequireNoDeficits(
+                                !current.optimizer().requireNoDeficits())),
+                        current -> current.withOptimizer(current.optimizer().withRequireNoDeficits(
+                                OptimizerConfig.defaults().requireNoDeficits())),
+                        "require no deficits feasibility upkeep constraint");
+                addIntegerRow(
+                        "Search node limit",
+                        "Maximum integer candidates evaluated per run (100-250000).",
+                        optimizer.nodeLimit(),
+                        (int) net.syllyaddons.optimizer.OptimizationRequest.MIN_NODE_LIMIT,
+                        (int) net.syllyaddons.optimizer.OptimizationRequest.MAX_NODE_LIMIT,
+                        (current, value) -> current.withOptimizer(current.optimizer().withNodeLimit(value)),
+                        current -> current.withOptimizer(current.optimizer().withNodeLimit(
+                                OptimizerConfig.defaults().nodeLimit())),
+                        "search node limit bounded candidates");
+                addIntegerRow(
+                        "Search time limit",
+                        "Wall-clock search limit in milliseconds (50-10000).",
+                        optimizer.timeLimitMillis(),
+                        (int) net.syllyaddons.optimizer.OptimizationRequest.MIN_TIME_LIMIT_MILLIS,
+                        (int) net.syllyaddons.optimizer.OptimizationRequest.MAX_TIME_LIMIT_MILLIS,
+                        (current, value) -> current.withOptimizer(current.optimizer().withTimeLimitMillis(value)),
+                        current -> current.withOptimizer(current.optimizer().withTimeLimitMillis(
+                                OptimizerConfig.defaults().timeLimitMillis())),
+                        "search time limit milliseconds bounded timeout");
+            }
             case SNAPSHOTS -> {
                 SyllyConfig config = settings.snapshot();
                 addActionRow(

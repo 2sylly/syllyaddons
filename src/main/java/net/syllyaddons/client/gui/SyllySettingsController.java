@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateRepository;
+import net.syllyaddons.optimizer.OptimizerService;
 import net.syllyaddons.profile.SpellProfileService;
 import net.syllyaddons.snapshot.SnapshotManagerService;
 import org.lwjgl.glfw.GLFW;
@@ -21,6 +22,7 @@ public final class SyllySettingsController {
     private static Supplier<ObservedStateRepository> repositorySupplier;
     private static Supplier<SnapshotManagerService> snapshotManagerSupplier;
     private static Supplier<TerritoryImpactCache> territoryImpactCacheSupplier;
+    private static Supplier<OptimizerService> optimizerSupplier;
     private static boolean warningShown;
 
     private SyllySettingsController() {}
@@ -30,12 +32,14 @@ public final class SyllySettingsController {
             Supplier<SpellProfileService> profiles,
             Supplier<ObservedStateRepository> repository,
             Supplier<SnapshotManagerService> snapshotManager,
-            Supplier<TerritoryImpactCache> territoryImpactCache) {
+            Supplier<TerritoryImpactCache> territoryImpactCache,
+            Supplier<OptimizerService> optimizer) {
         settingsSupplier = Objects.requireNonNull(settings, "settings");
         profilesSupplier = Objects.requireNonNull(profiles, "profiles");
         repositorySupplier = Objects.requireNonNull(repository, "repository");
         snapshotManagerSupplier = Objects.requireNonNull(snapshotManager, "snapshotManager");
         territoryImpactCacheSupplier = Objects.requireNonNull(territoryImpactCache, "territoryImpactCache");
+        optimizerSupplier = Objects.requireNonNull(optimizer, "optimizer");
 
         KeyMapping openSettings = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.syllyaddons.open_settings",
@@ -60,7 +64,7 @@ public final class SyllySettingsController {
 
     public static Screen createScreen(Screen parent) {
         if (settingsSupplier == null || profilesSupplier == null || repositorySupplier == null
-                || snapshotManagerSupplier == null || territoryImpactCacheSupplier == null) {
+                || snapshotManagerSupplier == null || territoryImpactCacheSupplier == null || optimizerSupplier == null) {
             throw new IllegalStateException("Sylly Addons settings are not initialized");
         }
         return new SyllySettingsScreen(
@@ -69,6 +73,7 @@ public final class SyllySettingsController {
                 profilesSupplier,
                 repositorySupplier.get(),
                 snapshotManagerSupplier.get(),
-                territoryImpactCacheSupplier.get());
+                territoryImpactCacheSupplier.get(),
+                optimizerSupplier.get());
     }
 }

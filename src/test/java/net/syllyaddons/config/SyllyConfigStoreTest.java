@@ -54,6 +54,8 @@ class SyllyConfigStoreTest {
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withImpactAlertDurationSeconds(1));
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withRoutingAdvisor(
                 RoutingAdvisorConfig.defaults().withMaximumAdditionalCostEmeralds(16_777_217)));
+        assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withOptimizer(
+                OptimizerConfig.defaults().withReserveFloorPercent(101)));
     }
 
     @Test
@@ -89,6 +91,22 @@ class SyllyConfigStoreTest {
                         .withMinimumTimeSavingSeconds(120)
                         .withMaximumAdditionalCostEmeralds(9_999)
                         .withActiveOperationsOnly(false));
+
+        store.save(updated);
+
+        assertEquals(updated, store.loadOrCreate().config());
+    }
+
+    @Test
+    void persistsTrack10OptimizerBounds() throws Exception {
+        Path destination = temporaryDirectory.resolve("settings.json");
+        SyllyConfigStore store = new SyllyConfigStore(destination, () -> 123L);
+        SyllyConfig updated = SyllyConfig.defaults().withOptimizer(
+                OptimizerConfig.defaults()
+                        .withReserveFloorPercent(40)
+                        .withRequireNoDeficits(false)
+                        .withNodeLimit(12_345)
+                        .withTimeLimitMillis(2_000));
 
         store.save(updated);
 

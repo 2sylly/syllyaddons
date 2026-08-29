@@ -413,16 +413,16 @@ attack preparations on the pinned client remain the manual acceptance check.
 
 Tasks:
 
-- [ ] Define decision variables for allowed economy-upgrade levels.
-- [ ] Treat current tower configuration as fixed.
-- [ ] Model resource production, upgrade costs, upkeep, routing loss, and reserve constraints.
-- [ ] Support objectives for minimum expense, deficit repair, maximum minimum buffer, and reserve preservation.
-- [ ] Prefer a small deterministic integer/constraint solver or a well-contained library.
-- [ ] Add time and search-node limits.
-- [ ] Return the best known feasible result if optimality is not proven.
-- [ ] Verify proposed configurations through the normal economy engine.
-- [ ] Produce a manual checklist and before/after totals.
-- [ ] Never expose an Apply action.
+- [x] Define downgrade decision variables for quantified economy-upgrade levels.
+- [x] Treat current tower and unquantified strategic configuration as fixed.
+- [x] Model resource production, upgrade costs, upkeep, routing loss, and reserve constraints.
+- [x] Support objectives for minimum expense, deficit repair, maximum minimum buffer, and reserve preservation.
+- [x] Implement a small deterministic bounded integer search without a solver dependency.
+- [x] Add time and search-node limits.
+- [x] Return the best known feasible result if optimality is not proven.
+- [x] Verify proposed configurations through a fresh normal-economy-engine calculation.
+- [x] Produce a manual checklist and before/after totals.
+- [x] Never expose an Apply action.
 
 Acceptance gate:
 
@@ -430,6 +430,10 @@ Acceptance gate:
 - Every recommendation is independently revalidated before display.
 - The current configuration is always available as the no-change baseline.
 - Infeasible reserve requirements produce an explanation, not an empty result.
+
+Implementation status: enumerable fixtures, node/time truncation, baseline retention, infeasible reserves, fixed tower
+levels, missing-input refusal, and independent revalidation are automated. Live usefulness still depends on a complete
+owned-territory menu scan and the Track 4 research assumptions documented with the result.
 
 ### Track 11 — Diagnostics, tests, and personal operations
 

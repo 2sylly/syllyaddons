@@ -5,7 +5,8 @@ Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
 3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
 and provenance inspection, the Track 6 explainable eco auditor, the Track 7 cached territory-removal simulator, and
-Track 8 map overlays and refresh-aware loss alerts, and the Track 9 passive attack-routing advisor. It
+Track 8 map overlays and refresh-aware loss alerts, the Track 9 passive attack-routing advisor, and the Track 10
+bounded defence-sustainability optimizer. It
 collects and analyses available state without issuing commands, clicking menus, or changing guild state.
 
 ## Development setup
@@ -170,9 +171,22 @@ current route cannot be observed, the panel says the recommendation is unavailab
 themselves, Wynntils' resulting timer event is compared with the displayed timer for ten seconds; it is never used to
 queue anything. See [the advisor evidence and safety rules](docs/ATTACK_ROUTING_ADVISOR.md).
 
+## Track 10 defence-sustainability optimizer
+
+Open **Settings → Optimizer → Open optimizer** to run a bounded integer search over the currently observed economy.
+The current configuration is always shown as the no-change baseline. A verified recommendation includes before/after
+expense, deficit, minimum buffer and stored totals plus a territory-by-territory manual downgrade checklist.
+
+Only upgrades with quantified production effects become variables on owned territories; quantified storage upgrades
+become variables on the HQ. Tower damage, attack, health, defence, offensive abilities, XP/tome/emerald-seeking bonuses,
+and non-HQ storage remain fixed. Candidates may only lower an observed level, never raise one. The selected objective,
+HQ reserve-floor percentage, no-deficit constraint, node limit, and wall-clock limit are configurable. Every displayed
+recommendation is independently rerun through the normal economy engine; an inconsistency withholds it. There is no
+Apply action. See [the optimizer model and safety rules](docs/DEFENCE_OPTIMIZER.md).
+
 ## Safety
 
-Tracks 1–9 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
+Tracks 1–10 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
 guild configuration. Container and advancement handlers consume post-observation events only.
 
 ## Current limitations
@@ -190,6 +204,9 @@ guild configuration. Container and advancement handlers consume post-observation
 - Track 9 requires the live attack menu to expose a parseable cost and timer. The alternate route cost remains an
   estimate until diplomacy/tax values and server route parity have live golden captures; any current-timer or displayed
   route disagreement disables the recommendation instead of relaxing the guard.
+- Track 10 compares raw resource units without cross-resource market weights. Its one-hour projection inherits Track
+  4's routing, foreign-tax, spending-order, production-effect, and storage assumptions. It refuses to run until every
+  owned territory's production and upgrade levels plus HQ storage are observed.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.
 - The official territory endpoint is needed for fields that Wynntils 4.2.8 downloads but does not retain in its public

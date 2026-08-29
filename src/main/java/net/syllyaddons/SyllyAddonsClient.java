@@ -38,6 +38,7 @@ import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateMerger;
 import net.syllyaddons.observation.ObservedStateRepository;
 import net.syllyaddons.observation.api.WynncraftTerritoryApiClient;
+import net.syllyaddons.optimizer.OptimizerService;
 import net.syllyaddons.persistence.HistoricalObservationStore;
 import net.syllyaddons.persistence.ObservedStateJsonCodec;
 import net.syllyaddons.profile.SpellProfileService;
@@ -66,6 +67,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
     private SnapshotManagerService snapshotManagerService;
     private TerritoryImpactCache territoryImpactCache;
     private AttackAdvisorService attackAdvisorService;
+    private OptimizerService optimizerService;
     private boolean observationPipelineStarted;
 
     @Override
@@ -107,6 +109,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 () -> settingsService);
         RouteHighlightController.register();
         attackAdvisorService = new AttackAdvisorService(repository, settingsService);
+        optimizerService = new OptimizerService(repository);
         AttackAdvisorOverlayController.register(() -> attackAdvisorService, () -> settingsService);
         SpellProfileController.register(() -> spellProfileService);
         SyllySettingsController.register(
@@ -114,7 +117,8 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 () -> spellProfileService,
                 () -> repository,
                 () -> snapshotManagerService,
-                () -> territoryImpactCache);
+                () -> territoryImpactCache,
+                () -> optimizerService);
 
         observationListener = new WynntilsObservationListener(
                 repository,
