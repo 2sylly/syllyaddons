@@ -23,9 +23,11 @@ import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSpellAdapter;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSpellInputListener;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsTerritoryAdapter;
 import net.syllyaddons.client.gui.DebugScreenController;
+import net.syllyaddons.client.gui.ImpactAlertController;
 import net.syllyaddons.client.gui.RouteHighlightController;
 import net.syllyaddons.client.gui.SpellProfileController;
 import net.syllyaddons.client.gui.SyllySettingsController;
+import net.syllyaddons.client.gui.TerritoryImpactOverlayController;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.config.SyllyConfigStore;
 import net.syllyaddons.domain.ObservedState;
@@ -92,7 +94,12 @@ public final class SyllyAddonsClient implements ClientModInitializer {
         installAutomaticSnapshots(repository, snapshotManagerService);
         installEcoAuditNotices(repository);
         installTerritoryImpactCache(repository, territoryImpactCache);
+        ImpactAlertController.register(repository, territoryImpactCache, settingsService);
         DebugScreenController.register(repository);
+        TerritoryImpactOverlayController.register(
+                () -> repository,
+                () -> territoryImpactCache,
+                () -> settingsService);
         RouteHighlightController.register();
         SpellProfileController.register(() -> spellProfileService);
         SyllySettingsController.register(

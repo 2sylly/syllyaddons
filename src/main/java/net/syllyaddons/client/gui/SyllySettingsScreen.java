@@ -206,6 +206,14 @@ public final class SyllySettingsScreen extends Screen {
                                     this, repository, territoryImpactCache));
                         },
                         "territory impact simulator removal cache defensive offensive");
+                addActionRow(
+                        "Map overlays & alerts",
+                        "Configure map filters and refresh-aware territory-loss alerts.",
+                        "Open display controls",
+                        () -> {
+                            if (minecraft != null) minecraft.setScreen(new ImpactDisplaySettingsScreen(this, settings));
+                        },
+                        "overlay colouring own guild enemy resource delay disconnection alerts sound severity");
                 addBooleanRow(
                         "Territory Impact",
                         "Precompute territory-removal consequences after relevant observations change.",

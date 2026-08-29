@@ -4,7 +4,8 @@ Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
 3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
-and provenance inspection, the Track 6 explainable eco auditor, and the Track 7 cached territory-removal simulator. It
+and provenance inspection, the Track 6 explainable eco auditor, the Track 7 cached territory-removal simulator, and
+Track 8 map overlays and refresh-aware loss alerts. It
 collects and analyses available state without issuing commands, clicking menus, or changing guild state.
 
 ## Development setup
@@ -139,9 +140,26 @@ builds, but is labelled stale. Connectivity and chokepoints can be exact when to
 routes and all economy/severity results remain estimated. Enemy economy is never invented. See
 [the impact rule ledger](docs/TERRITORY_IMPACT_RULES.md).
 
+## Track 8 map overlays and live alerts
+
+The Wynntils guild map can now colour territory regions from the last completed impact cache. Grey means no material
+cached change; yellow, orange, red, and purple correspond to minor, warning, critical, and catastrophic impact. Hover
+a territory for a constant-time cached route summary, baseline revision and age, and an explicit stale/building label.
+Existing **Show affected route** and provenance actions keep drawing the selected route above the impact colours.
+
+Open **Settings → Territory Impact → Open display controls** to enable colouring and filter it to the own guild, an
+enemy selected by exact name/tag/UUID, or all visible guilds. Disconnection-only, resource, and minimum-delay filters
+can be combined. The same screen controls loss-alert size, duration, sound, and minimum severity.
+
+Loss alerts diff consecutive normalized ownership observations. An alert is emitted only when the lost territory has
+a completed report whose source revision and full cache key exactly match the last pre-loss state. It displays the
+baseline age and the interval between the two observations, and labels the result as an advisory snapshot rather than
+an exact loss timestamp. Character/world or guild boundaries clear queued alerts. See
+[the map and alert evidence rules](docs/MAP_OVERLAYS_AND_ALERTS.md).
+
 ## Safety
 
-Track 1 has no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
+Tracks 1–8 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
 guild configuration. Container and advancement handlers consume post-observation events only.
 
 ## Current limitations
@@ -154,6 +172,8 @@ guild configuration. Container and advancement handlers consume post-observation
   not know player strategy, defence plans, treasury growth, or cross-resource market weights and are always advisory.
 - Track 7 offensive scores describe structural disruption to the observed guild's network. Enemy HQ, upgrades,
   production, tower supply, and strategic intent remain unavailable and cannot appear as exact.
+- Track 8 map colours and alerts are snapshots of the most recent completed cache. A loss can occur anywhere inside
+  the displayed observation window; if the exact pre-loss cache entry is missing, no alert is shown.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.
 - The official territory endpoint is needed for fields that Wynntils 4.2.8 downloads but does not retain in its public

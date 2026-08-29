@@ -1,12 +1,23 @@
 package net.syllyaddons.config;
 
 import java.util.Objects;
+import net.syllyaddons.impact.ImpactSeverity;
 
 public record SyllyConfig(
         int schemaVersion,
         boolean ecoAuditorEnabled,
         int ecoWarningCooldownSeconds,
         boolean territoryImpactEnabled,
+        boolean impactOverlayEnabled,
+        ImpactOverlayScope impactOverlayScope,
+        String impactSelectedEnemy,
+        boolean impactDisconnectionsOnly,
+        ImpactResourceFilter impactResourceFilter,
+        int impactMinimumDelaySeconds,
+        ImpactAlertSize impactAlertSize,
+        int impactAlertDurationSeconds,
+        boolean impactAlertSound,
+        ImpactSeverity impactAlertMinimumSeverity,
         boolean routingAdvisorEnabled,
         boolean optimizerEnabled,
         boolean automaticSnapshotsEnabled,
@@ -18,11 +29,21 @@ public record SyllyConfig(
     public static final int MAX_ECO_WARNING_COOLDOWN_SECONDS = 600;
     public static final int MIN_SNAPSHOT_RETENTION = 1;
     public static final int MAX_SNAPSHOT_RETENTION = 250;
+    public static final int MIN_IMPACT_DELAY_SECONDS = 0;
+    public static final int MAX_IMPACT_DELAY_SECONDS = 3_600;
+    public static final int MIN_IMPACT_ALERT_DURATION_SECONDS = 2;
+    public static final int MAX_IMPACT_ALERT_DURATION_SECONDS = 30;
 
     public SyllyConfig {
         if (schemaVersion != CURRENT_SCHEMA_VERSION) {
             throw new IllegalArgumentException("Unsupported Sylly Addons settings schema " + schemaVersion);
         }
+        impactOverlayScope = Objects.requireNonNull(impactOverlayScope, "impactOverlayScope");
+        impactSelectedEnemy = impactSelectedEnemy == null ? "" : impactSelectedEnemy.strip();
+        impactResourceFilter = Objects.requireNonNull(impactResourceFilter, "impactResourceFilter");
+        impactAlertSize = Objects.requireNonNull(impactAlertSize, "impactAlertSize");
+        impactAlertMinimumSeverity = Objects.requireNonNull(
+                impactAlertMinimumSeverity, "impactAlertMinimumSeverity");
         if (ecoWarningCooldownSeconds < MIN_ECO_WARNING_COOLDOWN_SECONDS
                 || ecoWarningCooldownSeconds > MAX_ECO_WARNING_COOLDOWN_SECONDS) {
             throw new IllegalArgumentException("Eco warning cooldown must be between "
@@ -32,61 +53,176 @@ public record SyllyConfig(
             throw new IllegalArgumentException("Snapshot retention must be between "
                     + MIN_SNAPSHOT_RETENTION + " and " + MAX_SNAPSHOT_RETENTION);
         }
+        if (impactMinimumDelaySeconds < MIN_IMPACT_DELAY_SECONDS
+                || impactMinimumDelaySeconds > MAX_IMPACT_DELAY_SECONDS) {
+            throw new IllegalArgumentException("Impact delay filter must be between "
+                    + MIN_IMPACT_DELAY_SECONDS + " and " + MAX_IMPACT_DELAY_SECONDS + " seconds");
+        }
+        if (impactAlertDurationSeconds < MIN_IMPACT_ALERT_DURATION_SECONDS
+                || impactAlertDurationSeconds > MAX_IMPACT_ALERT_DURATION_SECONDS) {
+            throw new IllegalArgumentException("Impact alert duration must be between "
+                    + MIN_IMPACT_ALERT_DURATION_SECONDS + " and " + MAX_IMPACT_ALERT_DURATION_SECONDS + " seconds");
+        }
     }
 
     public static SyllyConfig defaults() {
-        return new SyllyConfig(CURRENT_SCHEMA_VERSION, true, 30, true, true, true, false, 20, true, true);
+        return new SyllyConfig(
+                CURRENT_SCHEMA_VERSION, true, 30, true,
+                true, ImpactOverlayScope.OWN_GUILD, "", false, ImpactResourceFilter.ALL, 0,
+                ImpactAlertSize.MEDIUM, 8, true, ImpactSeverity.WARNING,
+                true, true, false, 20, true, true);
     }
 
     public SyllyConfig withEcoAuditorEnabled(boolean value) {
-        return copy(value, ecoWarningCooldownSeconds, territoryImpactEnabled, routingAdvisorEnabled,
-                optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention, profileSwapNotifications,
-                configurationWarnings);
+        return copy(value, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
     public SyllyConfig withEcoWarningCooldownSeconds(int value) {
-        return copy(ecoAuditorEnabled, value, territoryImpactEnabled, routingAdvisorEnabled,
-                optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention, profileSwapNotifications,
-                configurationWarnings);
+        return copy(ecoAuditorEnabled, value, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
     public SyllyConfig withTerritoryImpactEnabled(boolean value) {
-        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, value, routingAdvisorEnabled,
-                optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention, profileSwapNotifications,
-                configurationWarnings);
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, value, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactOverlayEnabled(boolean value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, value,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactOverlayScope(ImpactOverlayScope value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                value, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactSelectedEnemy(String value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, value, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactDisconnectionsOnly(boolean value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, value, impactResourceFilter, impactMinimumDelaySeconds,
+                impactAlertSize, impactAlertDurationSeconds, impactAlertSound, impactAlertMinimumSeverity,
+                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactResourceFilter(ImpactResourceFilter value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, value, impactMinimumDelaySeconds,
+                impactAlertSize, impactAlertDurationSeconds, impactAlertSound, impactAlertMinimumSeverity,
+                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactMinimumDelaySeconds(int value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter, value,
+                impactAlertSize, impactAlertDurationSeconds, impactAlertSound, impactAlertMinimumSeverity,
+                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactAlertSize(ImpactAlertSize value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, value, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactAlertDurationSeconds(int value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, value, impactAlertSound, impactAlertMinimumSeverity,
+                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactAlertSound(boolean value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, value,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
+    }
+
+    public SyllyConfig withImpactAlertMinimumSeverity(ImpactSeverity value) {
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound, value,
+                routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
     }
 
     public SyllyConfig withRoutingAdvisorEnabled(boolean value) {
-        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, value,
-                optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention, profileSwapNotifications,
-                configurationWarnings);
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, value, optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
     }
 
     public SyllyConfig withOptimizerEnabled(boolean value) {
-        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, routingAdvisorEnabled,
-                value, automaticSnapshotsEnabled, snapshotRetention, profileSwapNotifications,
-                configurationWarnings);
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, value, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, configurationWarnings);
     }
 
     public SyllyConfig withAutomaticSnapshotsEnabled(boolean value) {
-        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, routingAdvisorEnabled,
-                optimizerEnabled, value, snapshotRetention, profileSwapNotifications, configurationWarnings);
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, value, snapshotRetention,
+                profileSwapNotifications, configurationWarnings);
     }
 
     public SyllyConfig withSnapshotRetention(int value) {
-        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, routingAdvisorEnabled,
-                optimizerEnabled, automaticSnapshotsEnabled, value, profileSwapNotifications,
-                configurationWarnings);
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                value, profileSwapNotifications, configurationWarnings);
     }
 
     public SyllyConfig withProfileSwapNotifications(boolean value) {
-        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, routingAdvisorEnabled,
-                optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention, value, configurationWarnings);
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, value, configurationWarnings);
     }
 
     public SyllyConfig withConfigurationWarnings(boolean value) {
-        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, routingAdvisorEnabled,
-                optimizerEnabled, automaticSnapshotsEnabled, snapshotRetention, profileSwapNotifications, value);
+        return copy(ecoAuditorEnabled, ecoWarningCooldownSeconds, territoryImpactEnabled, impactOverlayEnabled,
+                impactOverlayScope, impactSelectedEnemy, impactDisconnectionsOnly, impactResourceFilter,
+                impactMinimumDelaySeconds, impactAlertSize, impactAlertDurationSeconds, impactAlertSound,
+                impactAlertMinimumSeverity, routingAdvisorEnabled, optimizerEnabled, automaticSnapshotsEnabled,
+                snapshotRetention, profileSwapNotifications, value);
     }
 
     public SyllyConfig reset(SyllyConfigSection section) {
@@ -95,7 +231,17 @@ public record SyllyConfig(
         return switch (section) {
             case ECO_AUDITOR -> withEcoAuditorEnabled(defaults.ecoAuditorEnabled())
                     .withEcoWarningCooldownSeconds(defaults.ecoWarningCooldownSeconds());
-            case TERRITORY_IMPACT -> withTerritoryImpactEnabled(defaults.territoryImpactEnabled());
+            case TERRITORY_IMPACT -> withTerritoryImpactEnabled(defaults.territoryImpactEnabled())
+                    .withImpactOverlayEnabled(defaults.impactOverlayEnabled())
+                    .withImpactOverlayScope(defaults.impactOverlayScope())
+                    .withImpactSelectedEnemy(defaults.impactSelectedEnemy())
+                    .withImpactDisconnectionsOnly(defaults.impactDisconnectionsOnly())
+                    .withImpactResourceFilter(defaults.impactResourceFilter())
+                    .withImpactMinimumDelaySeconds(defaults.impactMinimumDelaySeconds())
+                    .withImpactAlertSize(defaults.impactAlertSize())
+                    .withImpactAlertDurationSeconds(defaults.impactAlertDurationSeconds())
+                    .withImpactAlertSound(defaults.impactAlertSound())
+                    .withImpactAlertMinimumSeverity(defaults.impactAlertMinimumSeverity());
             case ROUTING_ADVISOR -> withRoutingAdvisorEnabled(defaults.routingAdvisorEnabled());
             case OPTIMIZER -> withOptimizerEnabled(defaults.optimizerEnabled());
             case SNAPSHOTS -> withAutomaticSnapshotsEnabled(defaults.automaticSnapshotsEnabled())
@@ -110,6 +256,16 @@ public record SyllyConfig(
             boolean nextEcoAuditorEnabled,
             int nextEcoWarningCooldownSeconds,
             boolean nextTerritoryImpactEnabled,
+            boolean nextImpactOverlayEnabled,
+            ImpactOverlayScope nextImpactOverlayScope,
+            String nextImpactSelectedEnemy,
+            boolean nextImpactDisconnectionsOnly,
+            ImpactResourceFilter nextImpactResourceFilter,
+            int nextImpactMinimumDelaySeconds,
+            ImpactAlertSize nextImpactAlertSize,
+            int nextImpactAlertDurationSeconds,
+            boolean nextImpactAlertSound,
+            ImpactSeverity nextImpactAlertMinimumSeverity,
             boolean nextRoutingAdvisorEnabled,
             boolean nextOptimizerEnabled,
             boolean nextAutomaticSnapshotsEnabled,
@@ -117,15 +273,12 @@ public record SyllyConfig(
             boolean nextProfileSwapNotifications,
             boolean nextConfigurationWarnings) {
         return new SyllyConfig(
-                CURRENT_SCHEMA_VERSION,
-                nextEcoAuditorEnabled,
-                nextEcoWarningCooldownSeconds,
-                nextTerritoryImpactEnabled,
-                nextRoutingAdvisorEnabled,
-                nextOptimizerEnabled,
-                nextAutomaticSnapshotsEnabled,
-                nextSnapshotRetention,
-                nextProfileSwapNotifications,
-                nextConfigurationWarnings);
+                CURRENT_SCHEMA_VERSION, nextEcoAuditorEnabled, nextEcoWarningCooldownSeconds,
+                nextTerritoryImpactEnabled, nextImpactOverlayEnabled, nextImpactOverlayScope,
+                nextImpactSelectedEnemy, nextImpactDisconnectionsOnly, nextImpactResourceFilter,
+                nextImpactMinimumDelaySeconds, nextImpactAlertSize, nextImpactAlertDurationSeconds,
+                nextImpactAlertSound, nextImpactAlertMinimumSeverity, nextRoutingAdvisorEnabled,
+                nextOptimizerEnabled, nextAutomaticSnapshotsEnabled, nextSnapshotRetention,
+                nextProfileSwapNotifications, nextConfigurationWarnings);
     }
 }

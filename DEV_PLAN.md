@@ -367,17 +367,17 @@ Acceptance gate:
 
 Tasks:
 
-- [ ] Add optional territory impact colouring.
-- [ ] Implement grey, yellow, orange, red, and purple severity mapping.
-- [ ] Add filters for own guild, selected enemy, visible guilds, disconnections, resources, and delay.
-- [ ] Extend territory hover tooltips with cached impact summaries.
-- [ ] Add route and provenance highlighting.
-- [ ] Detect ownership changes by diffing normalized territory states.
-- [ ] Match a reported loss to the last valid pre-loss cache entry.
-- [ ] Display minor, warning, critical, and catastrophic alerts.
-- [ ] Add size, duration, sound, and minimum-threshold settings.
-- [ ] Display the age of the baseline used by the alert.
-- [ ] Expire alerts safely on world or guild changes.
+- [x] Add optional territory impact colouring.
+- [x] Implement grey, yellow, orange, red, and purple severity mapping.
+- [x] Add filters for own guild, selected enemy, visible guilds, disconnections, resources, and delay.
+- [x] Extend territory hover tooltips with cached impact summaries.
+- [x] Add route and provenance highlighting.
+- [x] Detect ownership changes by diffing normalized territory states.
+- [x] Match a reported loss to the last valid pre-loss cache entry.
+- [x] Display minor, warning, critical, and catastrophic alerts.
+- [x] Add size, duration, sound, and minimum-threshold settings.
+- [x] Display the age of the baseline used by the alert.
+- [x] Expire alerts safely on world or guild changes.
 
 Acceptance gate:
 

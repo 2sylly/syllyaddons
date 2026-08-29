@@ -51,5 +51,30 @@ class SyllyConfigStoreTest {
     void rejectsOutOfRangeValuesBeforeTheyCanBePersisted() {
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withSnapshotRetention(0));
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withEcoWarningCooldownSeconds(601));
+        assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withImpactAlertDurationSeconds(1));
+    }
+
+    @Test
+    void fillsTrack8DefaultsWhenLoadingAReadablePreTrack8SettingsFile() throws Exception {
+        Path destination = temporaryDirectory.resolve("settings.json");
+        Files.writeString(destination, """
+                {
+                  "schemaVersion": 1,
+                  "ecoAuditorEnabled": true,
+                  "ecoWarningCooldownSeconds": 30,
+                  "territoryImpactEnabled": true,
+                  "routingAdvisorEnabled": true,
+                  "optimizerEnabled": true,
+                  "automaticSnapshotsEnabled": false,
+                  "snapshotRetention": 20,
+                  "profileSwapNotifications": true,
+                  "configurationWarnings": true
+                }
+                """);
+
+        SyllyConfigLoadResult loaded = new SyllyConfigStore(destination, () -> 42L).loadOrCreate();
+
+        assertEquals(SyllyConfig.defaults(), loaded.config());
+        assertEquals(null, loaded.quarantinedPath());
     }
 }

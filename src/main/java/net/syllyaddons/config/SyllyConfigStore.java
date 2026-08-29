@@ -2,7 +2,9 @@ package net.syllyaddons.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -75,7 +77,12 @@ public final class SyllyConfigStore {
     private SyllyConfig read(Path source) throws IOException {
         String json = Files.readString(source, StandardCharsets.UTF_8);
         if (json.isBlank()) throw new JsonParseException("settings file is empty");
-        SyllyConfig config = gson.fromJson(json, SyllyConfig.class);
+        JsonObject document = JsonParser.parseString(json).getAsJsonObject();
+        JsonObject defaults = gson.toJsonTree(SyllyConfig.defaults()).getAsJsonObject();
+        for (var entry : defaults.entrySet()) {
+            if (!document.has(entry.getKey())) document.add(entry.getKey(), entry.getValue().deepCopy());
+        }
+        SyllyConfig config = gson.fromJson(document, SyllyConfig.class);
         if (config == null) throw new JsonParseException("settings file contains null");
         return config;
     }
