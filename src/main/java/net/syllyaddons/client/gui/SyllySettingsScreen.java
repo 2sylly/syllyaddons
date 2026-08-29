@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.syllyaddons.config.SyllyConfig;
 import net.syllyaddons.config.SyllyConfigSection;
 import net.syllyaddons.config.SyllyConfigService;
+import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateRepository;
 import net.syllyaddons.profile.SpellProfileService;
 import net.syllyaddons.snapshot.SnapshotManagerService;
@@ -38,6 +39,7 @@ public final class SyllySettingsScreen extends Screen {
     private final java.util.function.Supplier<SpellProfileService> profilesSupplier;
     private final ObservedStateRepository repository;
     private final SnapshotManagerService snapshotManager;
+    private final TerritoryImpactCache territoryImpactCache;
     private final Map<SyllyConfigSection, Button> sectionButtons = new EnumMap<>(SyllyConfigSection.class);
     private final List<SettingRow> rows = new ArrayList<>();
 
@@ -54,13 +56,15 @@ public final class SyllySettingsScreen extends Screen {
             SyllyConfigService settings,
             java.util.function.Supplier<SpellProfileService> profilesSupplier,
             ObservedStateRepository repository,
-            SnapshotManagerService snapshotManager) {
+            SnapshotManagerService snapshotManager,
+            TerritoryImpactCache territoryImpactCache) {
         super(Component.translatable("screen.syllyaddons.settings"));
         this.parent = parent;
         this.settings = Objects.requireNonNull(settings, "settings");
         this.profilesSupplier = Objects.requireNonNull(profilesSupplier, "profilesSupplier");
         this.repository = Objects.requireNonNull(repository, "repository");
         this.snapshotManager = Objects.requireNonNull(snapshotManager, "snapshotManager");
+        this.territoryImpactCache = Objects.requireNonNull(territoryImpactCache, "territoryImpactCache");
     }
 
     @Override
@@ -191,13 +195,25 @@ public final class SyllySettingsScreen extends Screen {
                                 SyllyConfig.defaults().ecoWarningCooldownSeconds()),
                         "eco warning cooldown seconds notifications");
             }
-            case TERRITORY_IMPACT -> addBooleanRow(
-                    "Territory Impact",
-                    "Enable before/after territory consequence analysis when Track 7 is active.",
-                    settings.snapshot().territoryImpactEnabled(),
-                    current -> current.withTerritoryImpactEnabled(!current.territoryImpactEnabled()),
-                    current -> current.withTerritoryImpactEnabled(SyllyConfig.defaults().territoryImpactEnabled()),
-                    "territory impact enabled before after");
+            case TERRITORY_IMPACT -> {
+                addActionRow(
+                        "Impact simulator",
+                        "Inspect cached consequences of removing each territory from the current network.",
+                        "Open simulator",
+                        () -> {
+                            territoryImpactCache.request(repository.snapshot(), System.currentTimeMillis());
+                            if (minecraft != null) minecraft.setScreen(new TerritoryImpactScreen(
+                                    this, repository, territoryImpactCache));
+                        },
+                        "territory impact simulator removal cache defensive offensive");
+                addBooleanRow(
+                        "Territory Impact",
+                        "Precompute territory-removal consequences after relevant observations change.",
+                        settings.snapshot().territoryImpactEnabled(),
+                        current -> current.withTerritoryImpactEnabled(!current.territoryImpactEnabled()),
+                        current -> current.withTerritoryImpactEnabled(SyllyConfig.defaults().territoryImpactEnabled()),
+                        "territory impact enabled before after cache");
+            }
             case ROUTING_ADVISOR -> addBooleanRow(
                     "Routing Advisor",
                     "Enable route recommendations when the Track 4 truth engine is ready.",

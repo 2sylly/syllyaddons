@@ -4,8 +4,8 @@ Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
 3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
-and provenance inspection, and the Track 6 explainable eco auditor. It collects and analyses available state without
-issuing commands, clicking menus, or changing guild state.
+and provenance inspection, the Track 6 explainable eco auditor, and the Track 7 cached territory-removal simulator. It
+collects and analyses available state without issuing commands, clicking menus, or changing guild state.
 
 ## Development setup
 
@@ -125,6 +125,20 @@ cross-resource value, and upgrade strategic value remain explicit assumptions. W
 cooldown-controlled chat summary when the Eco Auditor setting is enabled. See
 [the auditor rule ledger](docs/ECO_AUDITOR_RULES.md).
 
+## Track 7 territory-impact simulator
+
+Open **Settings → Territory Impact → Open simulator** to inspect the cached consequence of removing any observed
+territory. Each result shows disconnected, rerouted, unchanged, and newly critical owned routes; before/after delivery
+time; per-resource HQ delivery, tax, tower-supply, deficit, and storage deltas; and separate defensive and offensive
+severity scores. If the live HQ routing mode is unknown, Cheapest and Fastest are simulated independently.
+
+The cache key covers ownership, ordered topology, bounds, HQ, routing mode, tax assumptions, production, storage, and
+upgrade inputs. Builds run off the render thread, old work is cancelled and generation-checked, and consumers can only
+look up immutable completed maps in constant time. A previous completed map can remain visible while a new generation
+builds, but is labelled stale. Connectivity and chokepoints can be exact when topology evidence is complete; selected
+routes and all economy/severity results remain estimated. Enemy economy is never invented. See
+[the impact rule ledger](docs/TERRITORY_IMPACT_RULES.md).
+
 ## Safety
 
 Track 1 has no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
@@ -138,6 +152,8 @@ guild configuration. Container and advancement handlers consume post-observation
   side-by-side live golden captures before the engine can report exact server parity.
 - Track 6 upgrade recommendations compare observed marginal output or headroom against version-pinned upkeep. They do
   not know player strategy, defence plans, treasury growth, or cross-resource market weights and are always advisory.
+- Track 7 offensive scores describe structural disruption to the observed guild's network. Enemy HQ, upgrades,
+  production, tower supply, and strategic intent remain unavailable and cannot appear as exact.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.
 - The official territory endpoint is needed for fields that Wynntils 4.2.8 downloads but does not retain in its public

@@ -29,6 +29,7 @@ import net.syllyaddons.client.gui.SyllySettingsController;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.config.SyllyConfigStore;
 import net.syllyaddons.domain.ObservedState;
+import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateMerger;
 import net.syllyaddons.observation.ObservedStateRepository;
 import net.syllyaddons.observation.api.WynncraftTerritoryApiClient;
@@ -57,6 +58,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
     private SpellProfileService spellProfileService;
     private SyllyConfigService settingsService;
     private SnapshotManagerService snapshotManagerService;
+    private TerritoryImpactCache territoryImpactCache;
     private boolean observationPipelineStarted;
 
     @Override
@@ -86,8 +88,10 @@ public final class SyllyAddonsClient implements ClientModInitializer {
         }
         installPersistence(repository, historicalStore);
         snapshotManagerService = createSnapshotManager(configDirectory, repository);
+        territoryImpactCache = new TerritoryImpactCache();
         installAutomaticSnapshots(repository, snapshotManagerService);
         installEcoAuditNotices(repository);
+        installTerritoryImpactCache(repository, territoryImpactCache);
         DebugScreenController.register(repository);
         RouteHighlightController.register();
         SpellProfileController.register(() -> spellProfileService);
@@ -95,7 +99,8 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 () -> settingsService,
                 () -> spellProfileService,
                 () -> repository,
-                () -> snapshotManagerService);
+                () -> snapshotManagerService,
+                () -> territoryImpactCache);
 
         observationListener = new WynntilsObservationListener(
                 repository,
@@ -105,6 +110,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 WynncraftTerritoryApiClient.createDefault(),
                 LOGGER);
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> startObservationPipeline());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> territoryImpactCache.close());
         LOGGER.info("Sylly Addons initialized; observation will attach after Wynntils startup");
     }
 
@@ -251,6 +257,14 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                     });
                 });
             });
+        });
+    }
+
+    private void installTerritoryImpactCache(
+            ObservedStateRepository stateRepository, TerritoryImpactCache cache) {
+        stateRepository.addListener(state -> {
+            if (!settingsService.snapshot().territoryImpactEnabled()) return;
+            cache.request(state, System.currentTimeMillis());
         });
     }
 

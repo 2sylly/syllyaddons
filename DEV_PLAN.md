@@ -342,18 +342,18 @@ Acceptance gate:
 
 Tasks:
 
-- [ ] Define immutable baseline and simulated graph states.
-- [ ] Remove one territory and recalculate valid routes from scratch.
-- [ ] Diff routes to classify disconnected, rerouted, unchanged, and newly critical territories.
-- [ ] Calculate delivery-time, tax, HQ-delivery, tower-supply, and chokepoint changes.
-- [ ] Calculate both routing modes when the mode is unknown.
-- [ ] Separate exact topology results from estimated resource/tower results.
-- [ ] Add defensive-mode severity scoring.
-- [ ] Add offensive-mode severity scoring.
-- [ ] Precompute impacts off the render thread.
-- [ ] Cache by a hash of ownership, HQ, topology, routing mode, taxes, and relevant production inputs.
-- [ ] Cancel or discard results built from an obsolete state generation.
-- [ ] Keep hover rendering constant-time by reading only completed cached results.
+- [x] Define immutable baseline and simulated graph states.
+- [x] Remove one territory and recalculate valid routes from scratch.
+- [x] Diff routes to classify disconnected, rerouted, unchanged, and newly critical territories.
+- [x] Calculate delivery-time, tax, HQ-delivery, tower-supply, and chokepoint changes.
+- [x] Calculate both routing modes when the mode is unknown.
+- [x] Separate exact topology results from estimated resource/tower results.
+- [x] Add defensive-mode severity scoring.
+- [x] Add offensive-mode severity scoring.
+- [x] Precompute impacts off the render thread.
+- [x] Cache by a hash of ownership, HQ, topology, routing mode, taxes, and relevant production inputs.
+- [x] Cancel or discard results built from an obsolete state generation.
+- [x] Keep hover rendering constant-time by reading only completed cached results.
 
 Acceptance gate:
 
