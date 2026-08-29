@@ -226,17 +226,17 @@ Acceptance gate:
 
 Tasks:
 
-- [ ] Build the configuration shell and navigation.
-- [ ] Add sections for Profiles, Characters, Eco Auditor, Territory Impact, Routing Advisor, Optimizer, Snapshots, Notifications, and Compatibility.
-- [ ] Implement settings search.
-- [ ] Implement field-level reset and section reset.
-- [ ] Add tooltips and immediate validation.
+- [x] Build the configuration shell and navigation.
+- [x] Add sections for Profiles, Characters, Eco Auditor, Territory Impact, Routing Advisor, Optimizer, Snapshots, Notifications, and Compatibility.
+- [x] Implement settings search.
+- [x] Implement field-level reset and section reset.
+- [x] Add tooltips and immediate validation.
 - [x] Build the profile editor and inline key-capture panel.
-- [ ] Build a data-status/debug screen early, before polished analysis panels.
-- [ ] Persist edits atomically and retain a backup of the last readable config.
-- [ ] Add a configurable open-settings key.
-- [ ] Integrate with Mod Menu.
-- [ ] Defer a Wynntils-settings button until all major features work.
+- [x] Build a data-status/debug screen early, before polished analysis panels.
+- [x] Persist edits atomically and retain a backup of the last readable config.
+- [x] Add a configurable open-settings key.
+- [x] Integrate with Mod Menu.
+- [x] Defer a Wynntils-settings button until all major features work.
 
 Acceptance gate:
 

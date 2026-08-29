@@ -1,7 +1,8 @@
-package net.syllyaddons.profile;
+package net.syllyaddons.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -9,53 +10,50 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.LongSupplier;
 
-public final class SpellProfileStore {
+public final class SyllyConfigStore {
     private final Path destination;
     private final Path backup;
     private final Gson gson;
     private final LongSupplier epochMillis;
 
-    public SpellProfileStore(Path destination) {
+    public SyllyConfigStore(Path destination) {
         this(destination, System::currentTimeMillis);
     }
 
-    SpellProfileStore(Path destination, LongSupplier epochMillis) {
+    SyllyConfigStore(Path destination, LongSupplier epochMillis) {
         this.destination = Objects.requireNonNull(destination, "destination").toAbsolutePath().normalize();
         this.backup = this.destination.resolveSibling(this.destination.getFileName() + ".bak");
         this.epochMillis = Objects.requireNonNull(epochMillis, "epochMillis");
-        gson = new GsonBuilder().setPrettyPrinting().create();
+        this.gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
     }
 
-    public Optional<SpellProfileConfig> load() throws IOException {
-        if (!Files.isRegularFile(destination)) return Optional.empty();
-        SpellProfileConfig config = gson.fromJson(Files.readString(destination, StandardCharsets.UTF_8), SpellProfileConfig.class);
-        if (config == null) throw new IOException("Spell profile file contained no configuration");
-        if (config.schemaVersion() != SpellProfileConfig.CURRENT_SCHEMA_VERSION) {
-            throw new IOException("Unsupported spell profile schema " + config.schemaVersion());
+    public synchronized SyllyConfigLoadResult loadOrCreate() throws IOException {
+        if (!Files.isRegularFile(destination)) {
+            SyllyConfig defaults = SyllyConfig.defaults();
+            save(defaults);
+            return new SyllyConfigLoadResult(defaults, null, null);
         }
-        return Optional.of(config);
-    }
 
-    public SpellProfileLoadResult loadSafely() throws IOException {
         try {
-            return new SpellProfileLoadResult(load(), null, null);
+            return new SyllyConfigLoadResult(read(destination), null, null);
         } catch (IOException | RuntimeException exception) {
             Path quarantined = quarantine();
-            String warning = "Broken spell profiles were moved to " + quarantined.getFileName()
-                    + "; a fresh profile configuration was created (" + exception.getMessage() + ")";
-            return new SpellProfileLoadResult(Optional.empty(), warning, quarantined);
+            SyllyConfig defaults = SyllyConfig.defaults();
+            save(defaults);
+            String warning = "Broken settings were moved to " + quarantined.getFileName()
+                    + "; defaults were restored (" + exception.getMessage() + ")";
+            return new SyllyConfigLoadResult(defaults, warning, quarantined);
         }
     }
 
-    public void save(SpellProfileConfig config) throws IOException {
+    public synchronized void save(SyllyConfig config) throws IOException {
         Objects.requireNonNull(config, "config");
         Path parent = destination.getParent();
         if (parent != null) Files.createDirectories(parent);
 
-        if (Files.isRegularFile(destination) && isReadableConfig()) {
+        if (Files.isRegularFile(destination) && isReadableConfig(destination)) {
             Path backupTemporary = backup.resolveSibling(backup.getFileName() + ".tmp");
             Files.copy(destination, backupTemporary, StandardCopyOption.REPLACE_EXISTING);
             moveAtomically(backupTemporary, backup);
@@ -66,9 +64,25 @@ public final class SpellProfileStore {
         moveAtomically(temporary, destination);
     }
 
-    private boolean isReadableConfig() {
+    public Path destination() {
+        return destination;
+    }
+
+    public Path backup() {
+        return backup;
+    }
+
+    private SyllyConfig read(Path source) throws IOException {
+        String json = Files.readString(source, StandardCharsets.UTF_8);
+        if (json.isBlank()) throw new JsonParseException("settings file is empty");
+        SyllyConfig config = gson.fromJson(json, SyllyConfig.class);
+        if (config == null) throw new JsonParseException("settings file contains null");
+        return config;
+    }
+
+    private boolean isReadableConfig(Path source) {
         try {
-            load();
+            read(source);
             return true;
         } catch (IOException | RuntimeException ignored) {
             return false;
@@ -91,13 +105,5 @@ public final class SpellProfileStore {
         } catch (AtomicMoveNotSupportedException ignored) {
             Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
         }
-    }
-
-    public Path destination() {
-        return destination;
-    }
-
-    public Path backup() {
-        return backup;
     }
 }

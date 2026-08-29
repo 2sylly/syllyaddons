@@ -23,6 +23,7 @@ public final class ObservedStateDebugScreen extends Screen {
     private static final int CONTENT_TOP = 32;
     private static final int CONTENT_BOTTOM_MARGIN = 20;
 
+    private final Screen parent;
     private final ObservedStateRepository repository;
     private final DataHealthService dataHealthService =
             new DataHealthService(FreshnessPolicy.personalDefaults());
@@ -32,8 +33,18 @@ public final class ObservedStateDebugScreen extends Screen {
     private int scrollLine;
 
     public ObservedStateDebugScreen(ObservedStateRepository repository) {
+        this(null, repository);
+    }
+
+    public ObservedStateDebugScreen(Screen parent, ObservedStateRepository repository) {
         super(Component.translatable("screen.syllyaddons.data_status"));
+        this.parent = parent;
         this.repository = java.util.Objects.requireNonNull(repository, "repository");
+    }
+
+    @Override
+    public void onClose() {
+        if (minecraft != null) minecraft.setScreen(parent);
     }
 
     @Override

@@ -1,7 +1,9 @@
 {
   "key.syllyaddons.open_data_status": "Open Sylly Addons Data Status",
   "key.syllyaddons.open_spell_profiles": "Open Sylly Addons Spell Profiles",
+  "key.syllyaddons.open_settings": "Open Sylly Addons Settings",
   "screen.syllyaddons.data_status": "Sylly Addons — Observed Data Status",
+  "screen.syllyaddons.settings": "Sylly Addons — Settings",
   "screen.syllyaddons.spell_profiles": "Sylly Addons — Spell Profiles",
   "screen.syllyaddons.spell_profile_editor": "Sylly Addons — Profile Editor"
 }

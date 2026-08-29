@@ -3,7 +3,7 @@
   "id": "syllyaddons",
   "version": "${version}",
   "name": "Sylly Addons",
-  "description": "A private, read-only Wynntils companion for spell profiles and guild economy analysis.",
+  "description": "A personal-use Wynntils companion for spell profiles and guild economy analysis.",
   "authors": [
     "2sylly"
   ],
@@ -11,6 +11,9 @@
   "entrypoints": {
     "client": [
       "net.syllyaddons.SyllyAddonsClient"
+    ],
+    "modmenu": [
+      "net.syllyaddons.client.gui.SyllyModMenuApi"
     ]
   },
   "depends": {

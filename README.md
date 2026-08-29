@@ -1,9 +1,10 @@
 # Sylly Addons
 
-Private Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
+Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
 
-The current implementation includes the Track 1 observation pipeline and Track 2 per-character spell profiles. It
-collects available state without issuing commands, clicking menus, or changing guild state.
+The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, and the
+Track 3 configuration shell. It collects available state without issuing commands, clicking menus, or changing guild
+state.
 
 ## Development setup
 
@@ -73,6 +74,17 @@ Wynntils binding from casting a second spell. Input is never claimed while chat,
 controls screen is open. Wynntils Quick Cast must remain enabled because its own weapon checks, class click direction,
 delays, cooldown, and adaptive lag correction are deliberately reused.
 
+## Track 3 settings
+
+Press **F6** or use Sylly Addons' Mod Menu config button to open the searchable settings shell. Profiles, Characters,
+Eco Auditor, Territory Impact, Routing Advisor, Optimizer, Snapshots, Notifications, and Compatibility are all
+reachable there. Implemented fields save immediately, validate before writing, and provide field and section resets.
+Feature sections from later tracks expose their enablement preferences now, ready for their analysis panels.
+
+Settings are stored at `config/syllyaddons/settings.json`. Both settings and spell profiles use atomic replacement and
+retain the previous readable file as `.bak`. A broken file is renamed with a `.corrupt-<timestamp>.json` suffix,
+replaced with safe defaults, and surfaced as an in-game warning.
+
 ## Safety
 
 Track 1 has no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
@@ -80,8 +92,7 @@ guild configuration. Container and advancement handlers consume post-observation
 
 ## Current limitations
 
-- The F8 data-status screen is intentionally a plain Track 1 inspector; polished filtering and configuration belong
-  to the configuration/UI track.
+- The F8 data-status screen is intentionally a plain provenance inspector; it is also reachable from Compatibility.
 - The routing-mode text recognizer is deliberately strict and still needs validation against the live HQ screen.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.

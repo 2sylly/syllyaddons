@@ -20,6 +20,9 @@ import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsSpellInputListener;
 import net.syllyaddons.compat.wynntils.v4_2_8.WynntilsTerritoryAdapter;
 import net.syllyaddons.client.gui.DebugScreenController;
 import net.syllyaddons.client.gui.SpellProfileController;
+import net.syllyaddons.client.gui.SyllySettingsController;
+import net.syllyaddons.config.SyllyConfigService;
+import net.syllyaddons.config.SyllyConfigStore;
 import net.syllyaddons.domain.ObservedState;
 import net.syllyaddons.observation.ObservedStateMerger;
 import net.syllyaddons.observation.ObservedStateRepository;
@@ -40,6 +43,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
     private WynntilsObservationListener observationListener;
     private WynntilsSpellInputListener spellInputListener;
     private SpellProfileService spellProfileService;
+    private SyllyConfigService settingsService;
     private boolean observationPipelineStarted;
 
     @Override
@@ -50,6 +54,10 @@ public final class SyllyAddonsClient implements ClientModInitializer {
             return;
         }
         LOGGER.info(compatibility.message());
+
+        Path configDirectory = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID);
+        settingsService = SyllyConfigService.open(new SyllyConfigStore(configDirectory.resolve("settings.json")));
+        settingsService.warning().ifPresent(warning -> LOGGER.warn("Sylly Addons settings: {}", warning));
 
         Path historicalPath = FabricLoader.getInstance()
                 .getConfigDir()
@@ -66,6 +74,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
         installPersistence(repository, historicalStore);
         DebugScreenController.register(repository);
         SpellProfileController.register(() -> spellProfileService);
+        SyllySettingsController.register(() -> settingsService, () -> spellProfileService, () -> repository);
 
         observationListener = new WynntilsObservationListener(
                 repository,
@@ -103,7 +112,11 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                     spellAdapter,
                     characterCatalog,
                     message -> LOGGER.error("Spell profiles: {}", message),
-                    SyllyAddonsClient::showProfileChangeMessage);
+                    profileName -> {
+                        if (settingsService.snapshot().profileSwapNotifications()) {
+                            showProfileChangeMessage(profileName);
+                        }
+                    });
             characterCatalog.attach(spellProfileService);
             spellProfileService.initialize(repository.snapshot());
             repository.addListener(spellProfileService::onObservedState);

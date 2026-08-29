@@ -57,4 +57,40 @@ class SpellProfileStoreTest {
         assertTrue(loaded.automaticSwitchingEnabled());
         assertTrue(loaded.knownCharacters().isEmpty());
     }
+
+    @Test
+    void keepsPreviousReadableConfigAsBackup() throws Exception {
+        Path destination = temporaryDirectory.resolve("spell-profiles.json");
+        SpellProfileStore store = new SpellProfileStore(destination, () -> 123L);
+        SpellProfileConfig original = SpellProfileConfig.empty();
+        SpellProfile profile = new SpellProfile("mage", "Mage", List.of());
+        SpellProfileConfig updated = new SpellProfileConfig(
+                SpellProfileConfig.CURRENT_SCHEMA_VERSION,
+                Map.of(profile.id(), profile),
+                Map.of(),
+                Map.of(),
+                profile.id(),
+                Map.of());
+
+        store.save(original);
+        store.save(updated);
+
+        assertTrue(Files.isRegularFile(store.backup()));
+        assertEquals(original, new SpellProfileStore(store.backup()).load().orElseThrow());
+        assertEquals(updated, store.load().orElseThrow());
+    }
+
+    @Test
+    void quarantinesUnreadableProfiles() throws Exception {
+        Path destination = temporaryDirectory.resolve("spell-profiles.json");
+        Files.writeString(destination, "not json");
+        SpellProfileStore store = new SpellProfileStore(destination, () -> 456L);
+
+        SpellProfileLoadResult result = store.loadSafely();
+
+        assertTrue(result.config().isEmpty());
+        assertEquals(temporaryDirectory.resolve("spell-profiles.corrupt-456.json"), result.quarantinedPath());
+        assertTrue(Files.isRegularFile(result.quarantinedPath()));
+        assertTrue(result.warning().contains("fresh profile configuration"));
+    }
 }

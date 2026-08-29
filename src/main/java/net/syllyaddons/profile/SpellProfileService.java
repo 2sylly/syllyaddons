@@ -37,6 +37,7 @@ public final class SpellProfileService {
     private ProfileResolution activeResolution = ProfileResolution.none();
     private SpellCastResult lastCastResult;
     private String lastError = "";
+    private String startupWarning = "";
     private boolean integrationAvailable = true;
 
     public SpellProfileService(
@@ -80,7 +81,10 @@ public final class SpellProfileService {
     public synchronized void initialize(ObservedState state) {
         integrationAvailable = true;
         try {
-            config = store.load().orElseGet(SpellProfileConfig::empty);
+            SpellProfileLoadResult loaded = store.loadSafely();
+            config = loaded.config().orElseGet(SpellProfileConfig::empty);
+            startupWarning = loaded.warningOptional().orElse("");
+            if (!startupWarning.isBlank()) errorLogger.accept(startupWarning);
         } catch (IOException | RuntimeException exception) {
             lastError = "Could not load spell profiles; using a fresh configuration";
             errorLogger.accept(lastError + ": " + exception.getMessage());
@@ -185,7 +189,7 @@ public final class SpellProfileService {
     }
 
     public synchronized String lastError() {
-        return lastError;
+        return lastError.isBlank() ? startupWarning : lastError;
     }
 
     public synchronized SpellProfileConfig configSnapshot() {

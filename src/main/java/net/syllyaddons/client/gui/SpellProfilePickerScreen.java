@@ -39,8 +39,9 @@ public final class SpellProfilePickerScreen extends Screen {
         "", "First Wynncraft spell", "Second Wynncraft spell", "Third Wynncraft spell", "Fourth Wynncraft spell"
     };
 
+    private final Screen parent;
     private final SpellProfileService profiles;
-    private Tab tab = Tab.CHARACTERS;
+    private Tab tab;
     private String selectedProfileId;
     private SpellProfile draft;
     private EditBox nameBox;
@@ -52,15 +53,33 @@ public final class SpellProfilePickerScreen extends Screen {
     private String status = "";
 
     public SpellProfilePickerScreen(SpellProfileService profiles) {
-        this(profiles, profiles.activeResolution().resolved()
+        this(null, profiles, Tab.CHARACTERS, profiles.activeResolution().resolved()
                 ? profiles.activeResolution().profile().id()
                 : null);
     }
 
     SpellProfilePickerScreen(SpellProfileService profiles, String selectedProfileId) {
+        this(null, profiles, Tab.CHARACTERS, selectedProfileId);
+    }
+
+    public SpellProfilePickerScreen(Screen parent, SpellProfileService profiles, boolean openProfilesTab) {
+        this(parent, profiles, openProfilesTab ? Tab.PROFILES : Tab.CHARACTERS, profiles.activeResolution().resolved()
+                ? profiles.activeResolution().profile().id()
+                : null);
+    }
+
+    private SpellProfilePickerScreen(
+            Screen parent, SpellProfileService profiles, Tab initialTab, String selectedProfileId) {
         super(Component.translatable("screen.syllyaddons.spell_profiles"));
+        this.parent = parent;
         this.profiles = Objects.requireNonNull(profiles, "profiles");
+        this.tab = Objects.requireNonNull(initialTab, "initialTab");
         this.selectedProfileId = selectedProfileId;
+    }
+
+    @Override
+    public void onClose() {
+        if (minecraft != null) minecraft.setScreen(parent);
     }
 
     @Override
