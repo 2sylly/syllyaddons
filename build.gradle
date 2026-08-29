@@ -1,0 +1,106 @@
+plugins {
+    id "dev.architectury.loom" version "${architectury_loom_version}"
+}
+
+group = maven_group
+version = mod_version
+
+base {
+    archivesName = archives_base_name
+}
+
+repositories {
+    maven { url "https://maven.parchmentmc.org/" }
+    maven { url "https://maven.fabricmc.net/" }
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+
+def wynntilsJarPath = localProperties.getProperty("wynntils.jar")
+if (wynntilsJarPath == null || wynntilsJarPath.isBlank()) {
+    throw new GradleException("Set wynntils.jar in local.properties; see local.properties.example")
+}
+
+def wynntilsJar = file(wynntilsJarPath)
+if (!wynntilsJar.isFile()) {
+    throw new GradleException("Wynntils JAR not found: ${wynntilsJar}")
+}
+
+def expectedWynntilsSha256 = providers.gradleProperty("supported_wynntils_sha256").get()
+def wynntilsDigest = java.security.MessageDigest.getInstance("SHA-256")
+wynntilsJar.withInputStream { input ->
+    byte[] buffer = new byte[8192]
+    int count
+    while ((count = input.read(buffer)) != -1) {
+        wynntilsDigest.update(buffer, 0, count)
+    }
+}
+def actualWynntilsSha256 = wynntilsDigest.digest().encodeHex().toString()
+if (!expectedWynntilsSha256.equalsIgnoreCase(actualWynntilsSha256)) {
+    throw new GradleException(
+            "Wynntils JAR checksum mismatch. Expected ${expectedWynntilsSha256}, found ${actualWynntilsSha256}")
+}
+
+loom {
+    silentMojangMappingsLicense()
+
+    runs {
+        client {
+            client()
+            name "Sylly Addons Client"
+            runDir "run"
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_version}@zip")
+    }
+
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    modCompileOnly files(wynntilsJar)
+    modLocalRuntime files(wynntilsJar)
+
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "minecraft_version", minecraft_version
+    inputs.property "fabric_loader_version", fabric_loader_version
+    inputs.property "supported_wynntils_version", supported_wynntils_version
+
+    filesMatching("fabric.mod.json") {
+        expand(
+                version: project.version,
+                minecraft_version: minecraft_version,
+                fabric_loader_version: fabric_loader_version,
+                supported_wynntils_version: supported_wynntils_version)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = Integer.parseInt(java_version)
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(java_version)
+    }
+    withSourcesJar()
+}
+
+test {
+    useJUnitPlatform()
+}

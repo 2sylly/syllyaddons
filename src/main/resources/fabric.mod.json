@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "syllyaddons",
+  "version": "${version}",
+  "name": "Sylly Addons",
+  "description": "A private, read-only Wynntils companion for spell profiles and guild economy analysis.",
+  "authors": [
+    "2sylly"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.syllyaddons.SyllyAddonsClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": "*",
+    "java": ">=21",
+    "minecraft": "${minecraft_version}",
+    "wynntils": "=${supported_wynntils_version}"
+  }
+}
