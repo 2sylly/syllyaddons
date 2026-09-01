@@ -398,7 +398,7 @@ Tasks:
 - [x] Show time saved and additional cost.
 - [x] Recommend Fastest for every positive queue-time saving, regardless of estimated added cost.
 - [x] Keep the advisor visible only while the matching attack screen is open.
-- [x] Infer missing routing only when the displayed timer/path uniquely matches one candidate.
+- [x] Infer missing routing from a unique timer/path match or a queue strictly longer than the shortest Fastest path.
 - [x] Prompt for HQ management when routing remains ambiguous.
 - [x] Add an optional Attack-item click guard with explicit HQ-management and attack-confirmation gestures.
 - [x] Mark results unavailable when required inputs are not observable or current-route validation disagrees.

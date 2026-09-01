@@ -15,8 +15,14 @@ import net.syllyaddons.domain.TerritoryState;
 import net.syllyaddons.routing.ObservedTerritoryGraphFactory;
 import net.syllyaddons.routing.OwnerTaxPolicy;
 import net.syllyaddons.routing.RouteEngine;
+import net.syllyaddons.routing.RouteDiagnostic;
 import net.syllyaddons.routing.RouteResult;
+import net.syllyaddons.routing.RouteStep;
+import net.syllyaddons.routing.RuleConfidence;
 import net.syllyaddons.routing.RoutingRules;
+import net.syllyaddons.routing.RouteTaxPolicy;
+import net.syllyaddons.routing.TaxQuote;
+import net.syllyaddons.routing.TerritoryNode;
 import net.syllyaddons.routing.TerritoryGraph;
 import net.syllyaddons.snapshot.ObservedEconomyAnalyzer;
 
@@ -63,33 +69,48 @@ public final class AttackRoutingAdvisor {
             return unavailable(target, hq, diagnostics, resolution.reason(), resolution.needsObservation(), nowEpochMillis);
         }
         RoutingMode observedMode = resolution.mode();
-        RouteResult observedRoute = observedMode == RoutingMode.CHEAPEST ? cheapestRoute : fastestRoute;
+        List<String> displayedRoute = completeDisplayedRoute(menu.observedRoute(), hq, target);
+        RouteResult displayedRouteResult = displayedRoute.isEmpty()
+                ? null
+                : observedRoute(observedMode, displayedRoute, graph, policy, rules);
         if (!menu.observedRoute().isEmpty()) {
-            List<String> displayedRoute = completeDisplayedRoute(menu.observedRoute(), hq, target);
             if (displayedRoute.isEmpty()) {
                 diagnostics.add("Displayed route text was partial; only the timer consistency guard was applied.");
-            } else if (!samePath(displayedRoute, observedRoute.path())) {
+            } else if (Math.abs(menu.observedTimerSeconds().getAsInt()
+                    - attackTimerSeconds(displayedRouteResult)) > TIMER_TOLERANCE_SECONDS) {
                 return unavailable(target, hq, diagnostics,
-                        "Displayed route does not match the local " + observedMode.name().toLowerCase() + " route.",
+                        "Displayed route length does not match its timer; live evidence is inconsistent.",
                         false, nowEpochMillis);
             }
         }
-        int predictedCurrentTimer = attackTimerSeconds(observedRoute);
-        if (Math.abs(menu.observedTimerSeconds().getAsInt() - predictedCurrentTimer) > TIMER_TOLERANCE_SECONDS) {
+        int displayedTimer = menu.observedTimerSeconds().getAsInt();
+        int fastestTimer = attackTimerSeconds(fastestRoute);
+        if (displayedTimer < fastestTimer - TIMER_TOLERANCE_SECONDS) {
             return unavailable(target, hq, diagnostics,
-                    "Displayed timer does not match the local route length; the rules need live validation.",
+                    "Displayed timer is shorter than the local shortest path; topology needs a fresh live capture.",
                     false, nowEpochMillis);
         }
+        if (observedMode == RoutingMode.FASTEST
+                && Math.abs(displayedTimer - fastestTimer) > TIMER_TOLERANCE_SECONDS) {
+            return unavailable(target, hq, diagnostics,
+                    "Displayed Fastest timer does not match the local shortest path.", false, nowEpochMillis);
+        }
+
+        RouteResult observedRoute = displayedRouteResult != null
+                ? displayedRouteResult
+                : observedMode == RoutingMode.CHEAPEST ? cheapestRoute : fastestRoute;
 
         int ownedTerritories = (int) state.territories().values().stream()
                 .filter(territory -> ownedBy(territory, state.guild().value()))
                 .count();
         AttackRouteEstimate cheapest = estimate(
-                RoutingMode.CHEAPEST, cheapestRoute, state, ownedTerritories,
+                RoutingMode.CHEAPEST, observedMode == RoutingMode.CHEAPEST ? observedRoute : cheapestRoute,
+                state, ownedTerritories,
                 observedMode == RoutingMode.CHEAPEST ? menu.observedTimerSeconds() : OptionalInt.empty(),
                 observedMode == RoutingMode.CHEAPEST ? menu.observedCostEmeralds() : OptionalLong.empty());
         AttackRouteEstimate fastest = estimate(
-                RoutingMode.FASTEST, fastestRoute, state, ownedTerritories,
+                RoutingMode.FASTEST, observedMode == RoutingMode.FASTEST ? observedRoute : fastestRoute,
+                state, ownedTerritories,
                 observedMode == RoutingMode.FASTEST ? menu.observedTimerSeconds() : OptionalInt.empty(),
                 observedMode == RoutingMode.FASTEST ? menu.observedCostEmeralds() : OptionalLong.empty());
 
@@ -98,6 +119,10 @@ public final class AttackRoutingAdvisor {
         AttackAdviceDecision decision = decide(timeSaved);
         diagnostics.add("Unobserved route costs use a 70% foreign-tax research estimate.");
         diagnostics.add("The current mode's cost and timer come from the displayed attack menu.");
+        if (observedMode == RoutingMode.CHEAPEST
+                && Math.abs(displayedTimer - attackTimerSeconds(cheapestRoute)) > TIMER_TOLERANCE_SECONDS) {
+            diagnostics.add("Displayed Cheapest timing replaced the fallback-tax A* estimate.");
+        }
         if (resolution.inferred()) {
             diagnostics.add("Current routing mode was inferred as " + displayName(observedMode)
                     + " from a unique attack timer/route match.");
@@ -121,6 +146,39 @@ public final class AttackRoutingAdvisor {
                 estimatedAttackCost(route.path(), state, ownedTerritories),
                 observedTimer,
                 observedCost);
+    }
+
+    private static RouteResult observedRoute(
+            RoutingMode mode,
+            List<String> path,
+            TerritoryGraph graph,
+            RouteTaxPolicy taxPolicy,
+            RoutingRules rules) {
+        List<RouteStep> steps = new ArrayList<>();
+        double selectionCost = 0;
+        for (int index = 1; index < path.size(); index++) {
+            TerritoryNode from = graph.node(path.get(index - 1));
+            TerritoryNode to = graph.node(path.get(index));
+            TaxQuote quote = from == null || to == null
+                    ? new TaxQuote(0, RuleConfidence.UNKNOWN, "Displayed route node is absent from the local graph")
+                    : taxPolicy.quote(from, to);
+            double stepCost = mode == RoutingMode.CHEAPEST ? 1.0 + quote.rate() : 1.0;
+            selectionCost += stepCost;
+            steps.add(new RouteStep(
+                    path.get(index - 1), path.get(index), quote.rate(), stepCost,
+                    quote.confidence(), quote.basis()));
+        }
+        return new RouteResult(
+                mode,
+                rules.version(),
+                path,
+                steps,
+                selectionCost,
+                Math.multiplyExact((long) steps.size(), rules.secondsPerHop()),
+                RuleConfidence.RESEARCH_ASSUMPTION,
+                List.of(new RouteDiagnostic(
+                        "OBSERVED_ATTACK_ROUTE",
+                        "Route order and timer were read from the open attack menu")));
     }
 
     static int attackTimerSeconds(RouteResult route) {
@@ -190,9 +248,15 @@ public final class AttackRoutingAdvisor {
             return new ModeResolution(
                     cheapestMatches ? RoutingMode.CHEAPEST : RoutingMode.FASTEST, true, false, "");
         }
+        int displayedTimer = menu.observedTimerSeconds().getAsInt();
+        int fastestTimer = attackTimerSeconds(fastest);
+        if (displayedTimer > fastestTimer + TIMER_TOLERANCE_SECONDS) {
+            diagnostics.add("Displayed queue is longer than the local shortest path, uniquely identifying Cheapest.");
+            return new ModeResolution(RoutingMode.CHEAPEST, true, false, "");
+        }
         if (!cheapestMatches) {
-            return new ModeResolution(null, false, false,
-                    "Displayed timer/route matches neither local routing mode; the rules need live validation.");
+            return new ModeResolution(null, false, true,
+                    "Local route estimates disagree. Right-click this panel to open HQ management.");
         }
         if (existingDerivedInference) {
             return new ModeResolution(state.routingMode().value(), false, false, "");

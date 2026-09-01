@@ -69,7 +69,7 @@ class AttackRoutingAdvisorTest {
 
         assertFalse(advice.available());
         assertEquals(AttackAdviceDecision.UNAVAILABLE, advice.decision());
-        assertTrue(advice.diagnostics().getLast().contains("does not match"));
+        assertTrue(advice.diagnostics().getLast().contains("shorter than the local shortest path"));
     }
 
     @Test
@@ -82,7 +82,7 @@ class AttackRoutingAdvisorTest {
                 splitState(RoutingMode.CHEAPEST), mismatched, 2_000);
 
         assertFalse(advice.available());
-        assertTrue(advice.diagnostics().getLast().contains("Displayed route does not match"));
+        assertTrue(advice.diagnostics().getLast().contains("route length"));
     }
 
     @Test
@@ -114,6 +114,26 @@ class AttackRoutingAdvisorTest {
         assertTrue(advice.routingModeInferred());
         assertFalse(advice.routingObservationNeeded());
         assertTrue(advice.fastest().observedTimerSeconds().isPresent());
+    }
+
+    @Test
+    void aQueueLongerThanFastestIdentifiesCheapestDespiteFallbackRouteMismatch() {
+        AttackMenuSnapshot displayed = new AttackMenuSnapshot(
+                "Goal",
+                OptionalLong.of(62_616),
+                OptionalInt.of(360),
+                List.of("HQ", "F1", "F2", "O1", "O2", "Goal"),
+                1_000,
+                List.of());
+
+        AttackRoutingAdvice advice = advisor.advise(splitState(null), displayed, 2_000);
+
+        assertTrue(advice.available());
+        assertEquals(RoutingMode.CHEAPEST, advice.resolvedRoutingMode());
+        assertTrue(advice.routingModeInferred());
+        assertEquals(120, advice.timeSavedSeconds());
+        assertEquals(displayed.observedRoute(), advice.cheapest().route().path());
+        assertTrue(advice.diagnostics().stream().anyMatch(line -> line.contains("uniquely identifying Cheapest")));
     }
 
     @Test

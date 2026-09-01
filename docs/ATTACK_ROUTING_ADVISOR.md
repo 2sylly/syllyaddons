@@ -25,8 +25,10 @@ Territory management remains the strongest local source for the current HQ routi
 missing, Track 9 compares the displayed timer and any complete displayed route against both local candidates:
 
 - exactly one matching candidate is recorded as derived routing evidence;
+- a displayed timer longer than the locally calculated Fastest timer uniquely identifies Cheapest, even when unknown
+  live taxes make the fallback Cheapest A* route differ from the game;
 - two matches are ambiguous and produce an HQ-management prompt;
-- zero matches are a calculation disagreement and withhold the recommendation.
+- other zero-match cases produce the HQ-management prompt instead of guessing.
 
 Right-clicking the ambiguity prompt opens the observed HQ using the same `gu territory <headquarters>` path as
 [Wynntils 4.2.9's territory-management holder](https://github.com/Wynntils/Wynntils/blob/v4.2.9/common/src/main/java/com/wynntils/screens/territorymanagement/TerritoryManagementHolder.java).
@@ -48,7 +50,8 @@ by the [official Wynncraft Wiki](https://wynncraft.wiki.gg/wiki/War). The precis
 connection order, and unobserved diplomacy tax rates are still research assumptions. See
 [the Track 4 rule ledger](ROUTING_AND_ECONOMY_RULES.md).
 
-The open menu's resolved-current-mode timer and cost are authoritative observations. Because public state does not
+The open menu's resolved-current-mode route, timer, and cost are authoritative observations. In particular, an
+observed Cheapest route replaces the fallback-tax A* route for that attack comparison. Because public state does not
 expose the attacking guild's current diplomacy tax for every owner, the alternate cost uses the same 70% foreign-tax
 fallback as the existing observed-economy analyzer and is always labelled `estimated`.
 
@@ -83,8 +86,9 @@ The recommendation and click guard remain unavailable if any of these are missin
 - current guild or headquarters;
 - target/topology or either candidate route;
 - routing that is neither observed nor uniquely inferable;
-- a complete displayed route that disagrees with the selected/inferred local route;
-- a displayed timer that differs from the selected/inferred route model by more than five seconds.
+- a complete displayed route whose own hop count disagrees with its displayed timer;
+- a displayed timer shorter than the local shortest path, or a known Fastest timer that differs from that path by more
+  than five seconds.
 
 Live acceptance still requires several manual attack-menu comparisons on the pinned Wynntils 4.2.9 build. A
 disagreement must keep advice and blocking unavailable and produce a rule/parser revision rather than being silently

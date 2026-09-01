@@ -173,8 +173,10 @@ attack screen is open. It shows each route's timer, emerald cost, hop count, Fas
 any positive time saving recommends Fastest. The current mode's cost and timer come from the displayed Attack item, and
 the other mode's cost uses the versioned Track 4 route plus the labelled 70% foreign-tax research fallback.
 
-If HQ routing was not captured from territory management, a timer/path that uniquely matches one calculated mode is
-recorded as derived routing evidence. An ambiguous match asks the player to right-click the panel to open HQ management.
+If HQ routing was not captured from territory management, a timer/path that uniquely identifies one mode is recorded
+as derived evidence. A displayed queue longer than the local shortest path identifies Cheapest even when live taxes
+make its route differ from the fallback A* estimate. Other ambiguous/mismatched cases ask the player to right-click the
+panel to open HQ management.
 Settings → Routing Advisor includes **Block click when faster queuing is available**. When enabled and Fastest is
 proven quicker, a normal click on the actual Attack item is stopped by a confirmation overlay. Right-click opens HQ
 management; shift-left-click confirms the original Attack action. See
@@ -241,8 +243,9 @@ selects a routing mode or attacks in response to an event or timer.
 - Track 8 map colours and alerts are snapshots of the most recent completed cache. A loss can occur anywhere inside
   the displayed observation window; if the exact pre-loss cache entry is missing, no alert is shown.
 - Track 9 requires the live Attack item to expose a parseable cost and timer. The alternate route cost remains an
-  estimate until diplomacy/tax values and server route parity have live golden captures; ambiguous routing or any
-  timer/route disagreement disables both the recommendation and click guard instead of guessing.
+  estimate until diplomacy/tax values and server route parity have live golden captures. A displayed Cheapest route is
+  authoritative for the current attack; internally inconsistent or shorter-than-local-fastest evidence disables both
+  the recommendation and click guard instead of guessing.
 - Track 10 compares raw resource units without cross-resource market weights. Its one-hour projection inherits Track
   4's routing, foreign-tax, spending-order, production-effect, and storage assumptions. It refuses to run until every
   owned territory's production and upgrade levels plus HQ storage are observed.
