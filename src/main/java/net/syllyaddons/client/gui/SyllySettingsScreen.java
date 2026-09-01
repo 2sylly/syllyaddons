@@ -19,6 +19,8 @@ import net.syllyaddons.config.SyllyConfigSection;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.config.OptimizerConfig;
 import net.syllyaddons.config.RoutingAdvisorConfig;
+import net.syllyaddons.diagnostics.DebugBundleService;
+import net.syllyaddons.diagnostics.OperationsHealthService;
 import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateRepository;
 import net.syllyaddons.optimizer.OptimizerService;
@@ -44,6 +46,8 @@ public final class SyllySettingsScreen extends Screen {
     private final SnapshotManagerService snapshotManager;
     private final TerritoryImpactCache territoryImpactCache;
     private final OptimizerService optimizerService;
+    private final OperationsHealthService operationsHealthService;
+    private final DebugBundleService debugBundleService;
     private final Map<SyllyConfigSection, Button> sectionButtons = new EnumMap<>(SyllyConfigSection.class);
     private final List<SettingRow> rows = new ArrayList<>();
 
@@ -62,7 +66,9 @@ public final class SyllySettingsScreen extends Screen {
             ObservedStateRepository repository,
             SnapshotManagerService snapshotManager,
             TerritoryImpactCache territoryImpactCache,
-            OptimizerService optimizerService) {
+            OptimizerService optimizerService,
+            OperationsHealthService operationsHealthService,
+            DebugBundleService debugBundleService) {
         super(Component.translatable("screen.syllyaddons.settings"));
         this.parent = parent;
         this.settings = Objects.requireNonNull(settings, "settings");
@@ -71,6 +77,8 @@ public final class SyllySettingsScreen extends Screen {
         this.snapshotManager = Objects.requireNonNull(snapshotManager, "snapshotManager");
         this.territoryImpactCache = Objects.requireNonNull(territoryImpactCache, "territoryImpactCache");
         this.optimizerService = Objects.requireNonNull(optimizerService, "optimizerService");
+        this.operationsHealthService = Objects.requireNonNull(operationsHealthService, "operationsHealthService");
+        this.debugBundleService = Objects.requireNonNull(debugBundleService, "debugBundleService");
     }
 
     @Override
@@ -445,13 +453,14 @@ public final class SyllySettingsScreen extends Screen {
 
     private void buildCompatibility() {
         addActionRow(
-                "Observed data status",
-                "Inspect live values, provenance, freshness, and integration diagnostics.",
-                "Open data status",
+                "Operations & data health",
+                "Distinguish integration failures, missing inputs, calculation disagreement, and disabled features.",
+                "Open operations",
                 () -> {
-                    if (minecraft != null) minecraft.setScreen(new ObservedStateDebugScreen(this, repository));
+                    if (minecraft != null) minecraft.setScreen(new OperationsScreen(
+                            this, repository, operationsHealthService, debugBundleService));
                 },
-                "debug data status provenance health diagnostics observations");
+                "debug bundle data status provenance health diagnostics observations operations redacted");
         addUnavailableRow(
                 "Wynntils compatibility guard",
                 "Exact support is locked to Wynntils 4.2.8 for Minecraft 1.21.11.");

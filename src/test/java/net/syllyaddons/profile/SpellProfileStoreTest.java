@@ -51,11 +51,16 @@ class SpellProfileStoreTest {
                 }
                 """);
 
-        SpellProfileConfig loaded = new SpellProfileStore(destination).load().orElseThrow();
+        SpellProfileConfig loaded = new SpellProfileStore(destination, () -> 777L).load().orElseThrow();
 
         assertEquals(SpellProfileConfig.CURRENT_SCHEMA_VERSION, loaded.schemaVersion());
         assertTrue(loaded.automaticSwitchingEnabled());
         assertTrue(loaded.knownCharacters().isEmpty());
+        Path migrationBackup = temporaryDirectory.resolve(
+                "legacy-profiles.json.schema-v1-to-v2-777.bak");
+        assertTrue(Files.isRegularFile(migrationBackup));
+        assertTrue(Files.readString(migrationBackup).contains("\"schemaVersion\": 1"));
+        assertTrue(Files.readString(destination).contains("\"schemaVersion\": 2"));
     }
 
     @Test

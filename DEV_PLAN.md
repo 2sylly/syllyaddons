@@ -441,20 +441,26 @@ owned-territory menu scan and the Track 4 research assumptions documented with t
 
 Tasks:
 
-- [ ] Add structured debug logging with sensitive/player-specific values minimized.
-- [ ] Add an in-game compatibility and data-health screen.
-- [ ] Add a one-click debug bundle containing versions, calculation diagnostics, and a redacted snapshot.
-- [ ] Unit-test all pure domain, routing, auditor, impact, and optimizer code.
-- [ ] Maintain golden real-world fixtures separately from mutable live state.
-- [ ] Add performance tests for all-territory impact-cache rebuilds.
-- [ ] Add a manual smoke-test checklist for each pinned Wynntils upgrade.
-- [ ] Back up config and profiles before schema changes.
-- [ ] Keep mixins minimal and document their exact target and reason.
+- [x] Add structured debug logging with sensitive/player-specific values minimized.
+- [x] Add an in-game compatibility and data-health screen.
+- [x] Add a one-click debug bundle containing versions, calculation diagnostics, and a redacted snapshot.
+- [x] Unit-test all pure domain, routing, auditor, impact, and optimizer code.
+- [x] Maintain golden real-world fixtures separately from mutable live state.
+- [x] Add performance tests for all-territory impact-cache rebuilds.
+- [x] Add a manual smoke-test checklist for each pinned Wynntils upgrade.
+- [x] Back up config and profiles before schema changes.
+- [x] Keep mixins minimal and document their exact target and reason.
 
 Acceptance gate:
 
 - A failed integration can be distinguished from missing data and from a calculation disagreement.
 - The addon can disable one broken subsystem while leaving unrelated features usable.
+
+Implementation status: F6 Compatibility now opens a scrollable operations hub with independently classified subsystem
+health and a local redacted ZIP export. Startup listeners fail closed independently, the sole Wynntils accessor mixin
+is optional and guarded at use sites, schema migrations create versioned pre-change backups, real captures remain in
+an immutable fixture tree, and the dedicated `performanceTest` task covers a 405-territory full-cache rebuild. The
+pinned-upgrade procedure is documented in `docs/WYNNTILS_UPGRADE_SMOKE_TEST.md`.
 
 ## 7. Milestones and ordering
 

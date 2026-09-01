@@ -6,7 +6,7 @@ The current implementation includes the Track 1 observation pipeline, Track 2 pe
 3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
 and provenance inspection, the Track 6 explainable eco auditor, the Track 7 cached territory-removal simulator, and
 Track 8 map overlays and refresh-aware loss alerts, the Track 9 passive attack-routing advisor, and the Track 10
-bounded defence-sustainability optimizer. It
+bounded defence-sustainability optimizer, plus the Track 11 diagnostics and personal-operations layer. It
 collects and analyses available state without issuing commands, clicking menus, or changing guild state.
 
 ## Development setup
@@ -86,7 +86,8 @@ Feature sections from later tracks expose their enablement preferences now, read
 
 Settings are stored at `config/syllyaddons/settings.json`. Both settings and spell profiles use atomic replacement and
 retain the previous readable file as `.bak`. A broken file is renamed with a `.corrupt-<timestamp>.json` suffix,
-replaced with safe defaults, and surfaced as an in-game warning.
+replaced with safe defaults, and surfaced as an in-game warning. Supported schema migrations additionally preserve the
+exact pre-migration file as `.schema-v<old>-to-v<new>-<timestamp>.bak` before writing the upgraded document.
 
 ## Track 4 routing and economy engine
 
@@ -184,14 +185,33 @@ HQ reserve-floor percentage, no-deficit constraint, node limit, and wall-clock l
 recommendation is independently rerun through the normal economy engine; an inconsistency withholds it. There is no
 Apply action. See [the optimizer model and safety rules](docs/DEFENCE_OPTIMIZER.md).
 
+## Track 11 diagnostics and personal operations
+
+Open **Settings → Compatibility → Operations & data health** for a scrollable subsystem overview. Each row reports a
+separate status and reason category, so a pinned-Wynntils integration failure, incomplete observation, and calculation
+disagreement cannot collapse into the same generic error. Disabled features are reported independently, and the
+observation, attack-advisor, and spell-profile listeners attach in separate failure boundaries.
+
+**Export debug bundle** writes a local ZIP under `config/syllyaddons/debug-bundles`. It contains pinned versions,
+subsystem health, calculation diagnostics, and a reproducible redacted observation. Character IDs, guild identities,
+profile names, territory names, evidence notes, alert text, raw configs, and raw logs are omitted or replaced with
+per-bundle aliases. The archive includes a reminder to review it before sharing.
+
+Operational events use allow-listed structured JSON fields that cannot accept player/profile/guild values. The full
+unit suite covers the pure routing, economy, auditor, impact, advisor, optimizer, persistence, profile, and diagnostic
+layers; `./gradlew performanceTest` separately exercises a 405-territory all-target impact rebuild. Real upstream
+captures stay isolated in `src/test/resources/fixtures`. See the [pinned upgrade smoke test](docs/WYNNTILS_UPGRADE_SMOKE_TEST.md)
+and [complete mixin inventory](docs/MIXINS.md).
+
 ## Safety
 
-Tracks 1–10 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
+Tracks 1–11 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
 guild configuration. Container and advancement handlers consume post-observation events only.
 
 ## Current limitations
 
-- The F8 data-status screen is intentionally a plain provenance inspector; it is also reachable from Compatibility.
+- The F8 data-status screen remains the detailed provenance inspector; the Compatibility section now opens the Track
+  11 operations summary and links to the same raw inspector.
 - The routing-mode text recognizer is deliberately strict and still needs validation against the live HQ screen.
 - Track 4's route ordering, current tax semantics, delivery timing, expense order, and storage behavior still need
   side-by-side live golden captures before the engine can report exact server parity.

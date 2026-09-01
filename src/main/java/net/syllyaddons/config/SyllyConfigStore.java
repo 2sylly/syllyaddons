@@ -13,12 +13,14 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.function.LongSupplier;
+import net.syllyaddons.persistence.SchemaMigrationBackup;
 
 public final class SyllyConfigStore {
     private final Path destination;
     private final Path backup;
     private final Gson gson;
     private final LongSupplier epochMillis;
+    private final SchemaMigrationBackup schemaMigrationBackup = new SchemaMigrationBackup();
 
     public SyllyConfigStore(Path destination) {
         this(destination, System::currentTimeMillis);
@@ -78,6 +80,14 @@ public final class SyllyConfigStore {
         String json = Files.readString(source, StandardCharsets.UTF_8);
         if (json.isBlank()) throw new JsonParseException("settings file is empty");
         JsonObject document = JsonParser.parseString(json).getAsJsonObject();
+        int storedSchema = document.has("schemaVersion") ? document.get("schemaVersion").getAsInt() : 0;
+        if (storedSchema > SyllyConfig.CURRENT_SCHEMA_VERSION) {
+            throw new JsonParseException("Unsupported settings schema " + storedSchema);
+        }
+        if (storedSchema > 0 && storedSchema < SyllyConfig.CURRENT_SCHEMA_VERSION) {
+            schemaMigrationBackup.create(
+                    source, storedSchema, SyllyConfig.CURRENT_SCHEMA_VERSION, epochMillis.getAsLong());
+        }
         JsonObject defaults = gson.toJsonTree(SyllyConfig.defaults()).getAsJsonObject();
         for (var entry : defaults.entrySet()) {
             if (!document.has(entry.getKey())) document.add(entry.getKey(), entry.getValue().deepCopy());

@@ -43,9 +43,9 @@ public final class TerritoryImpactOverlayController {
         if (registered) return;
         registered = true;
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            if (!(screen instanceof GuildMapScreen)) return;
+            if (!(screen instanceof GuildMapScreen) || !(screen instanceof AbstractMapScreenAccessor map)) return;
             ScreenEvents.afterRender(screen).register((ignored, graphics, mouseX, mouseY, tickDelta) ->
-                    render(graphics, mouseX, mouseY, (AbstractMapScreenAccessor) screen));
+                    render(graphics, mouseX, mouseY, map));
         });
     }
 

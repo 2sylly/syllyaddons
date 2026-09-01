@@ -34,6 +34,12 @@ import net.syllyaddons.client.gui.TerritoryImpactOverlayController;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.config.SyllyConfigStore;
 import net.syllyaddons.domain.ObservedState;
+import net.syllyaddons.diagnostics.DebugBundleService;
+import net.syllyaddons.diagnostics.DiagnosticCategory;
+import net.syllyaddons.diagnostics.OperationsHealthService;
+import net.syllyaddons.diagnostics.StructuredDiagnosticLogger;
+import net.syllyaddons.diagnostics.Subsystem;
+import net.syllyaddons.diagnostics.SubsystemHealthRegistry;
 import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateMerger;
 import net.syllyaddons.observation.ObservedStateRepository;
@@ -59,6 +65,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
     private static final long PERSIST_INTERVAL_MILLIS = 30_000;
 
     private static ObservedStateRepository repository;
+    private final SubsystemHealthRegistry subsystemHealth = new SubsystemHealthRegistry();
     private WynntilsObservationListener observationListener;
     private WynntilsAttackAdvisorListener attackAdvisorListener;
     private WynntilsSpellInputListener spellInputListener;
@@ -68,16 +75,36 @@ public final class SyllyAddonsClient implements ClientModInitializer {
     private TerritoryImpactCache territoryImpactCache;
     private AttackAdvisorService attackAdvisorService;
     private OptimizerService optimizerService;
-    private boolean observationPipelineStarted;
+    private OperationsHealthService operationsHealthService;
+    private DebugBundleService debugBundleService;
+    private boolean pipelinesStarted;
 
     @Override
     public void onInitializeClient() {
         CompatibilityResult compatibility = new WynntilsCompatibilityGuard().validate();
         if (!compatibility.compatible()) {
-            LOGGER.error("Sylly Addons disabled: {}", compatibility.message());
+            subsystemHealth.failed(
+                    Subsystem.COMPATIBILITY,
+                    DiagnosticCategory.INTEGRATION_FAILURE,
+                    "Pinned Wynntils compatibility check failed",
+                    compatibility.message());
+            StructuredDiagnosticLogger.error(
+                    LOGGER,
+                    "compatibility_check",
+                    Map.of(
+                            "subsystem", Subsystem.COMPATIBILITY,
+                            "status", "failed",
+                            "version", WynntilsCompatibilityGuard.SUPPORTED_VERSION));
             return;
         }
-        LOGGER.info(compatibility.message());
+        subsystemHealth.healthy(Subsystem.COMPATIBILITY, compatibility.message());
+        StructuredDiagnosticLogger.info(
+                LOGGER,
+                "compatibility_check",
+                Map.of(
+                        "subsystem", Subsystem.COMPATIBILITY,
+                        "status", "healthy",
+                        "version", WynntilsCompatibilityGuard.SUPPORTED_VERSION));
 
         Path configDirectory = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID);
         settingsService = SyllyConfigService.open(new SyllyConfigStore(configDirectory.resolve("settings.json")));
@@ -97,9 +124,12 @@ public final class SyllyAddonsClient implements ClientModInitializer {
         }
         installPersistence(repository, historicalStore);
         snapshotManagerService = createSnapshotManager(configDirectory, repository);
+        subsystemHealth.healthy(Subsystem.SNAPSHOTS, "Snapshot storage initialized");
         territoryImpactCache = new TerritoryImpactCache();
+        subsystemHealth.healthy(Subsystem.TERRITORY_IMPACT, "Impact cache initialized");
         installAutomaticSnapshots(repository, snapshotManagerService);
         installEcoAuditNotices(repository);
+        subsystemHealth.healthy(Subsystem.ECO_AUDITOR, "Eco auditor initialized");
         installTerritoryImpactCache(repository, territoryImpactCache);
         ImpactAlertController.register(repository, territoryImpactCache, settingsService);
         DebugScreenController.register(repository);
@@ -110,6 +140,24 @@ public final class SyllyAddonsClient implements ClientModInitializer {
         RouteHighlightController.register();
         attackAdvisorService = new AttackAdvisorService(repository, settingsService);
         optimizerService = new OptimizerService(repository);
+        subsystemHealth.healthy(Subsystem.OPTIMIZER, "Bounded optimizer initialized");
+        operationsHealthService = new OperationsHealthService(
+                subsystemHealth,
+                repository,
+                settingsService,
+                () -> spellProfileService,
+                attackAdvisorService,
+                territoryImpactCache,
+                optimizerService);
+        Map<String, String> diagnosticVersions = diagnosticVersions();
+        debugBundleService = new DebugBundleService(
+                configDirectory.resolve("debug-bundles"),
+                diagnosticVersions,
+                repository,
+                operationsHealthService,
+                attackAdvisorService,
+                territoryImpactCache,
+                optimizerService);
         AttackAdvisorOverlayController.register(() -> attackAdvisorService, () -> settingsService);
         SpellProfileController.register(() -> spellProfileService);
         SyllySettingsController.register(
@@ -118,7 +166,9 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 () -> repository,
                 () -> snapshotManagerService,
                 () -> territoryImpactCache,
-                () -> optimizerService);
+                () -> optimizerService,
+                () -> operationsHealthService,
+                () -> debugBundleService);
 
         observationListener = new WynntilsObservationListener(
                 repository,
@@ -129,7 +179,10 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 LOGGER);
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> startObservationPipeline());
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> territoryImpactCache.close());
-        LOGGER.info("Sylly Addons initialized; observation will attach after Wynntils startup");
+        StructuredDiagnosticLogger.info(
+                LOGGER,
+                "client_initialized",
+                Map.of("status", "waiting", "version", installedVersion(MOD_ID)));
     }
 
     public static ObservedStateRepository stateRepository() {
@@ -138,15 +191,37 @@ public final class SyllyAddonsClient implements ClientModInitializer {
     }
 
     private void startObservationPipeline() {
-        if (observationPipelineStarted) return;
+        if (pipelinesStarted) return;
+        pipelinesStarted = true;
+        startObservationSubsystem();
+        startAttackAdvisorSubsystem();
+        startSpellProfileSubsystem();
+    }
+
+    private void startObservationSubsystem() {
         try {
             WynntilsMod.registerEventListener(observationListener);
+            observationListener.captureInitialState();
+            subsystemHealth.healthy(Subsystem.OBSERVATION, "Wynntils observation listener attached");
+            subsystemStarted(Subsystem.OBSERVATION);
+        } catch (RuntimeException exception) {
+            subsystemFailed(Subsystem.OBSERVATION, exception);
+        }
+    }
+
+    private void startAttackAdvisorSubsystem() {
+        try {
             attackAdvisorListener = new WynntilsAttackAdvisorListener(attackAdvisorService, LOGGER);
             WynntilsMod.registerEventListener(attackAdvisorListener);
-            observationPipelineStarted = true;
-            observationListener.captureInitialState();
-            LOGGER.info("Track 1 observation pipeline initialized");
+            subsystemHealth.healthy(Subsystem.ROUTING_ADVISOR, "Passive attack listener attached");
+            subsystemStarted(Subsystem.ROUTING_ADVISOR);
+        } catch (RuntimeException exception) {
+            subsystemFailed(Subsystem.ROUTING_ADVISOR, exception);
+        }
+    }
 
+    private void startSpellProfileSubsystem() {
+        try {
             WynntilsSpellAdapter spellAdapter = new WynntilsSpellAdapter();
             Path profilePath = FabricLoader.getInstance()
                     .getConfigDir()
@@ -158,7 +233,10 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                     spellAdapter,
                     spellAdapter,
                     characterCatalog,
-                    message -> LOGGER.error("Spell profiles: {}", message),
+                    message -> StructuredDiagnosticLogger.warn(
+                            LOGGER,
+                            "profile_warning",
+                            Map.of("subsystem", Subsystem.SPELL_PROFILES, "status", "degraded")),
                     profileName -> {
                         if (settingsService.snapshot().profileSwapNotifications()) {
                             showProfileChangeMessage(profileName);
@@ -170,11 +248,35 @@ public final class SyllyAddonsClient implements ClientModInitializer {
             WynntilsMod.registerEventListener(characterCatalog);
             spellInputListener = new WynntilsSpellInputListener(spellProfileService);
             WynntilsMod.registerEventListener(spellInputListener);
-            LOGGER.info("Track 2 spell profile pipeline initialized");
-            LOGGER.info("Track 9 passive attack-routing advisor initialized");
+            subsystemHealth.healthy(Subsystem.SPELL_PROFILES, "Profile listeners attached");
+            subsystemStarted(Subsystem.SPELL_PROFILES);
         } catch (RuntimeException exception) {
-            LOGGER.error("Could not attach Sylly Addons pipelines to Wynntils", exception);
+            spellProfileService = null;
+            subsystemFailed(Subsystem.SPELL_PROFILES, exception);
         }
+    }
+
+    private void subsystemStarted(Subsystem subsystem) {
+        StructuredDiagnosticLogger.info(
+                LOGGER,
+                "subsystem_started",
+                Map.of("subsystem", subsystem, "status", "healthy"));
+    }
+
+    private void subsystemFailed(Subsystem subsystem, RuntimeException exception) {
+        subsystemHealth.failed(
+                subsystem,
+                DiagnosticCategory.INTEGRATION_FAILURE,
+                "Subsystem failed closed while attaching to Wynntils",
+                exception.getClass().getSimpleName());
+        StructuredDiagnosticLogger.error(
+                LOGGER,
+                "subsystem_failed",
+                Map.of(
+                        "subsystem", subsystem,
+                        "status", "failed",
+                        "category", DiagnosticCategory.INTEGRATION_FAILURE,
+                        "errorType", exception.getClass().getSimpleName()));
     }
 
     private static ObservedState loadHistoricalState(HistoricalObservationStore store) {
@@ -294,5 +396,19 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 .getModContainer(modId)
                 .map(container -> container.getMetadata().getVersion().getFriendlyString())
                 .orElse("unknown");
+    }
+
+    private static Map<String, String> diagnosticVersions() {
+        return Map.of(
+                "minecraft", installedVersion("minecraft"),
+                "fabricLoader", installedVersion("fabricloader"),
+                "fabricApi", installedVersion("fabric-api"),
+                "wynntils", installedVersion("wynntils"),
+                "syllyaddons", installedVersion(MOD_ID),
+                "settingsSchema", Integer.toString(net.syllyaddons.config.SyllyConfig.CURRENT_SCHEMA_VERSION),
+                "profileSchema", Integer.toString(net.syllyaddons.profile.SpellProfileConfig.CURRENT_SCHEMA_VERSION),
+                "observedStateSchema", Integer.toString(ObservedState.CURRENT_SCHEMA_VERSION),
+                "routingRules", "routing-research-2026-08-29.1",
+                "economyRules", "economy-research-2026-08-29.1");
     }
 }

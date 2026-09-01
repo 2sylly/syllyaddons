@@ -107,5 +107,18 @@ java {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags "performance"
+    }
+}
+
+tasks.register("performanceTest", Test) {
+    description = "Runs the bounded Track 11 performance regression suite."
+    group = "verification"
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags "performance"
+    }
+    shouldRunAfter test
 }

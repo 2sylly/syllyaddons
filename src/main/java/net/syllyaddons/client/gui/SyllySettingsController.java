@@ -9,6 +9,8 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.syllyaddons.config.SyllyConfigService;
+import net.syllyaddons.diagnostics.DebugBundleService;
+import net.syllyaddons.diagnostics.OperationsHealthService;
 import net.syllyaddons.impact.TerritoryImpactCache;
 import net.syllyaddons.observation.ObservedStateRepository;
 import net.syllyaddons.optimizer.OptimizerService;
@@ -23,6 +25,8 @@ public final class SyllySettingsController {
     private static Supplier<SnapshotManagerService> snapshotManagerSupplier;
     private static Supplier<TerritoryImpactCache> territoryImpactCacheSupplier;
     private static Supplier<OptimizerService> optimizerSupplier;
+    private static Supplier<OperationsHealthService> operationsHealthSupplier;
+    private static Supplier<DebugBundleService> debugBundleSupplier;
     private static boolean warningShown;
 
     private SyllySettingsController() {}
@@ -33,13 +37,17 @@ public final class SyllySettingsController {
             Supplier<ObservedStateRepository> repository,
             Supplier<SnapshotManagerService> snapshotManager,
             Supplier<TerritoryImpactCache> territoryImpactCache,
-            Supplier<OptimizerService> optimizer) {
+            Supplier<OptimizerService> optimizer,
+            Supplier<OperationsHealthService> operationsHealth,
+            Supplier<DebugBundleService> debugBundle) {
         settingsSupplier = Objects.requireNonNull(settings, "settings");
         profilesSupplier = Objects.requireNonNull(profiles, "profiles");
         repositorySupplier = Objects.requireNonNull(repository, "repository");
         snapshotManagerSupplier = Objects.requireNonNull(snapshotManager, "snapshotManager");
         territoryImpactCacheSupplier = Objects.requireNonNull(territoryImpactCache, "territoryImpactCache");
         optimizerSupplier = Objects.requireNonNull(optimizer, "optimizer");
+        operationsHealthSupplier = Objects.requireNonNull(operationsHealth, "operationsHealth");
+        debugBundleSupplier = Objects.requireNonNull(debugBundle, "debugBundle");
 
         KeyMapping openSettings = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.syllyaddons.open_settings",
@@ -64,7 +72,8 @@ public final class SyllySettingsController {
 
     public static Screen createScreen(Screen parent) {
         if (settingsSupplier == null || profilesSupplier == null || repositorySupplier == null
-                || snapshotManagerSupplier == null || territoryImpactCacheSupplier == null || optimizerSupplier == null) {
+                || snapshotManagerSupplier == null || territoryImpactCacheSupplier == null || optimizerSupplier == null
+                || operationsHealthSupplier == null || debugBundleSupplier == null) {
             throw new IllegalStateException("Sylly Addons settings are not initialized");
         }
         return new SyllySettingsScreen(
@@ -74,6 +83,8 @@ public final class SyllySettingsController {
                 repositorySupplier.get(),
                 snapshotManagerSupplier.get(),
                 territoryImpactCacheSupplier.get(),
-                optimizerSupplier.get());
+                optimizerSupplier.get(),
+                operationsHealthSupplier.get(),
+                debugBundleSupplier.get());
     }
 }
