@@ -89,9 +89,7 @@ public final class SyllyConfigStore {
                     source, storedSchema, SyllyConfig.CURRENT_SCHEMA_VERSION, epochMillis.getAsLong());
         }
         JsonObject defaults = gson.toJsonTree(SyllyConfig.defaults()).getAsJsonObject();
-        for (var entry : defaults.entrySet()) {
-            if (!document.has(entry.getKey())) document.add(entry.getKey(), entry.getValue().deepCopy());
-        }
+        fillMissing(document, defaults);
         SyllyConfig config = gson.fromJson(document, SyllyConfig.class);
         if (config == null) throw new JsonParseException("settings file contains null");
         return config;
@@ -103,6 +101,16 @@ public final class SyllyConfigStore {
             return true;
         } catch (IOException | RuntimeException ignored) {
             return false;
+        }
+    }
+
+    private static void fillMissing(JsonObject document, JsonObject defaults) {
+        for (var entry : defaults.entrySet()) {
+            if (!document.has(entry.getKey())) {
+                document.add(entry.getKey(), entry.getValue().deepCopy());
+            } else if (entry.getValue().isJsonObject() && document.get(entry.getKey()).isJsonObject()) {
+                fillMissing(document.getAsJsonObject(entry.getKey()), entry.getValue().getAsJsonObject());
+            }
         }
     }
 

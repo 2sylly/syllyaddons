@@ -1,9 +1,8 @@
 {
   "required": false,
-  "package": "net.syllyaddons.mixin",
+  "package": "net.syllyaddons.recorder.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "AbstractMapScreenAccessor",
     "AbstractContainerScreenAccessor"
   ],
   "injectors": {

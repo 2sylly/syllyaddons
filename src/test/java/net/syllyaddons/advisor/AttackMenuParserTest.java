@@ -67,4 +67,25 @@ class AttackMenuParserTest {
 
         assertEquals(List.of("HQ", "Cinfras Entrance"), snapshot.observedRoute());
     }
+
+    @Test
+    void parsesTheLiveAttackItemLayoutAndRouteGlyphs() {
+        AttackMenuSnapshot snapshot = parser.parse(
+                "Attacking: Illuminant Path",
+                List.of(new AttackMenuEntry(
+                        "Attack with your Guild's emeralds",
+                        List.of(
+                                "Territory Defences: Very High",
+                                "➜ Unicorn Trail",
+                                "✖ Waterfall Cave",
+                                "✔ Illuminant Path",
+                                "Price: ✖ 62616",
+                                "Time to Start: 20m"))),
+                Set.of("Unicorn Trail", "Waterfall Cave", "Illuminant Path"),
+                1_000);
+
+        assertEquals(62_616, snapshot.observedCostEmeralds().orElseThrow());
+        assertEquals(1_200, snapshot.observedTimerSeconds().orElseThrow());
+        assertEquals(List.of("Unicorn Trail", "Waterfall Cave", "Illuminant Path"), snapshot.observedRoute());
+    }
 }

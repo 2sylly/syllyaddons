@@ -1,23 +1,36 @@
-# Attack-routing advisor evidence and safety rules
+# Attack-routing advisor evidence and interaction rules
 
-Track 9 adds a read-only decision panel to Wynncraft's existing attack-preparation flow. It does not open the menu,
-click an item, send a command or packet, change HQ routing, spend emeralds, or queue a war.
+Track 9 adds a decision panel to Wynncraft's existing attack-preparation flow. It appears only on the matching
+`Attacking: <territory>` screen. Nothing runs an attack or changes routing in response to a timer, container update,
+world event, or recommendation.
 
-## Passive inputs
+## Observed inputs
 
-The exact supported Wynntils 4.2.9 source already recognizes container titles shaped as
-`Attacking: <territory>`. Sylly Addons listens only to Wynntils' post-content and post-slot events, confirms that title,
-and reads the visible item names/tooltips. The parser accepts emeralds, Emerald Blocks, Liquid Emeralds, minute/second
-durations, clock durations, and an explicitly labelled route/path. Missing text remains missing.
+The exact supported Wynntils 4.2.9 source recognizes container titles shaped as `Attacking: <territory>`. SyllyAddons
+listens to Wynntils' post-content and post-slot events, confirms that title, and reads visible item names/tooltips. The
+parser accepts emeralds, Emerald Blocks, Liquid Emeralds, minute/second durations, clock durations, and the route glyphs
+used by the live Attack item. Missing text remains missing.
 
 The [official Wynncraft Wiki's guild-war documentation](https://wynncraft.wiki.gg/wiki/War) states that the attack menu
-shows target difficulty, cost, timer, and the route used for the timer, and that a left click is the action that spends
-emeralds and starts the timer. This is why Track 9 treats inventory contents as evidence but never observes or injects
-mouse clicks.
+shows target difficulty, cost, timer, and the route used for the timer, and that a left click spends emeralds and starts
+the timer. The click guard therefore identifies the Attack item by its name plus price/timer or click cues; it never
+assumes a fixed inventory slot.
 
-After the player queues an attack themselves, Sylly Addons passively observes Wynntils'
-`GuildWarQueuedEvent`. Its timer is compared with the menu timer using a five-second tolerance and displayed for ten
-seconds. This validates an already-completed player action; the advisor cannot cause the event.
+After the player queues an attack, SyllyAddons observes Wynntils' `GuildWarQueuedEvent`. Its timer is retained as
+diagnostic validation of the previously displayed menu timer. It does not trigger a click, command, or routing change.
+
+## Routing-mode recovery
+
+Territory management remains the strongest local source for the current HQ routing mode. If that observation is
+missing, Track 9 compares the displayed timer and any complete displayed route against both local candidates:
+
+- exactly one matching candidate is recorded as derived routing evidence;
+- two matches are ambiguous and produce an HQ-management prompt;
+- zero matches are a calculation disagreement and withhold the recommendation.
+
+Right-clicking the ambiguity prompt opens the observed HQ using the same `gu territory <headquarters>` path as
+[Wynntils 4.2.9's territory-management holder](https://github.com/Wynntils/Wynntils/blob/v4.2.9/common/src/main/java/com/wynntils/screens/territorymanagement/TerritoryManagementHolder.java).
+The action is limited to the panel and occurs only on the player's right-click; it does not select or change a mode.
 
 ## Calculation boundary
 
@@ -35,35 +48,44 @@ by the [official Wynncraft Wiki](https://wynncraft.wiki.gg/wiki/War). The precis
 connection order, and unobserved diplomacy tax rates are still research assumptions. See
 [the Track 4 rule ledger](ROUTING_AND_ECONOMY_RULES.md).
 
-The open menu's current-mode timer and cost are authoritative observations. Because public state does not expose the
-attacking guild's current diplomacy tax for every owner, the alternate cost uses the same 70% foreign-tax fallback as
-the existing observed-economy analyzer and is always labelled `estimated`.
+The open menu's resolved-current-mode timer and cost are authoritative observations. Because public state does not
+expose the attacking guild's current diplomacy tax for every owner, the alternate cost uses the same 70% foreign-tax
+fallback as the existing observed-economy analyzer and is always labelled `estimated`.
 
-## Recommendation rules
+## Recommendation and click guard
 
-The panel calculates Fastest's non-negative time saving and signed additional emerald cost relative to Cheapest. User
-settings then select one of four explanations:
+Fastest is recommended whenever its calculated queue time is at least one second shorter than Cheapest. There is no
+minimum-saving or maximum-extra-cost threshold. The estimated cost delta remains visible so the player can judge it.
 
-- no significant difference when both deltas are within the configured negligible thresholds;
-- Cheapest adds negligible delay when the time saving is below the configured minimum or negligible-time threshold;
-- Fastest is worth it when the saving is meaningful and extra cost is within the configured maximum;
-- Cheapest avoids too much extra cost otherwise.
+**Block click when faster queuing is available** is enabled by default and can be disabled under Routing Advisor. It
+engages only when all of the following are true:
 
-Defaults are a 60-second minimum saving, 32,768-emerald maximum extra cost, 30-second negligible delay, and 64-emerald
-negligible cost. `Active operations only` hides historical advice after the attack screen and ten-second queued
-validation end; disabling it retains the last panel for at most 30 seconds.
+- the matching attack screen is still open;
+- both candidates passed observation and consistency checks;
+- Fastest has a strictly shorter queue;
+- the player left-clicked the item positively identified as the Attack action.
 
-## Refusal and safety contract
+The original click is cancelled and a modal states the exact saving. While it is open:
 
-The recommendation is unavailable if any of these are missing or inconsistent:
+- right-click sends only the HQ-management command described above;
+- shift-left-click sends one normal left click to the same container ID and Attack-slot index after revalidating that
+  the item is still the Attack action;
+- all other mouse clicks are consumed by the modal.
+
+Changing screens invalidates the per-screen confirmation state. If the slot, item, container ID, evidence, setting, or
+screen no longer matches, no confirmed attack click is sent.
+
+## Refusal contract
+
+The recommendation and click guard remain unavailable if any of these are missing or inconsistent:
 
 - displayed target, cost, or timer;
-- current guild, headquarters, or HQ routing mode;
+- current guild or headquarters;
 - target/topology or either candidate route;
-- a displayed route that disagrees with the locally calculated current-mode route;
-- a displayed timer that differs from the current-mode route model by more than five seconds.
+- routing that is neither observed nor uniquely inferable;
+- a complete displayed route that disagrees with the selected/inferred local route;
+- a displayed timer that differs from the selected/inferred route model by more than five seconds.
 
-Source-level safety checks cover the Track 9 packages for click, command, and packet APIs. The only integration methods
-consume post-observation container events, a post-queue timer event, and world-state changes. Live acceptance still
-requires several manual attack-menu comparisons on the pinned Wynntils 4.2.9 build; a disagreement must keep advice
-unavailable and produce a new rule/parser revision rather than being silently accepted.
+Live acceptance still requires several manual attack-menu comparisons on the pinned Wynntils 4.2.9 build. A
+disagreement must keep advice and blocking unavailable and produce a rule/parser revision rather than being silently
+accepted.

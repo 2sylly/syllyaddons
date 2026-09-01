@@ -241,65 +241,22 @@ public final class SyllySettingsScreen extends Screen {
                 RoutingAdvisorConfig advisor = config.routingAdvisor();
                 addBooleanRow(
                         "Routing Advisor",
-                        "Show passive Fastest/Cheapest advice on the open attack screen.",
+                        "Show Fastest/Cheapest advice on the open attack screen.",
                         config.routingAdvisorEnabled(),
                         current -> current.withRoutingAdvisorEnabled(!current.routingAdvisorEnabled()),
                         current -> current.withRoutingAdvisorEnabled(SyllyConfig.defaults().routingAdvisorEnabled()),
-                        "routing advisor enabled route recommendations attack passive read only");
-                addIntegerRow(
-                        "Minimum time saving",
-                        "Seconds Fastest must save before it can be recommended (0-7200).",
-                        advisor.minimumTimeSavingSeconds(),
-                        RoutingAdvisorConfig.MIN_TIME_SECONDS,
-                        RoutingAdvisorConfig.MAX_TIME_SECONDS,
-                        (current, value) -> current.withRoutingAdvisor(
-                                current.routingAdvisor().withMinimumTimeSavingSeconds(value)),
-                        current -> current.withRoutingAdvisor(current.routingAdvisor().withMinimumTimeSavingSeconds(
-                                RoutingAdvisorConfig.defaults().minimumTimeSavingSeconds())),
-                        "minimum time saving seconds fastest threshold");
-                addIntegerRow(
-                        "Maximum extra cost",
-                        "Most extra emeralds Fastest may cost before Cheapest wins (0-16777216).",
-                        advisor.maximumAdditionalCostEmeralds(),
-                        RoutingAdvisorConfig.MIN_COST_EMERALDS,
-                        RoutingAdvisorConfig.MAX_COST_EMERALDS,
-                        (current, value) -> current.withRoutingAdvisor(
-                                current.routingAdvisor().withMaximumAdditionalCostEmeralds(value)),
-                        current -> current.withRoutingAdvisor(current.routingAdvisor().withMaximumAdditionalCostEmeralds(
-                                RoutingAdvisorConfig.defaults().maximumAdditionalCostEmeralds())),
-                        "maximum additional extra cost emeralds threshold");
+                        "routing advisor enabled route recommendations attack screen");
                 addBooleanRow(
-                        "Active operations only",
-                        "Hide the panel after the attack screen/queued validation ends.",
-                        advisor.activeOperationsOnly(),
+                        "Block click when faster queuing is available",
+                        "Require confirmation when Fastest would queue sooner than Cheapest.",
+                        advisor.blockAttackWhenFastestIsFaster(),
                         current -> current.withRoutingAdvisor(
-                                current.routingAdvisor().withActiveOperationsOnly(
-                                        !current.routingAdvisor().activeOperationsOnly())),
-                        current -> current.withRoutingAdvisor(current.routingAdvisor().withActiveOperationsOnly(
-                                RoutingAdvisorConfig.defaults().activeOperationsOnly())),
-                        "active operations only attack screen queued panel history");
-                addIntegerRow(
-                        "Negligible delay",
-                        "Time differences at or below this many seconds are insignificant (0-7200).",
-                        advisor.insignificantTimeSeconds(),
-                        RoutingAdvisorConfig.MIN_TIME_SECONDS,
-                        RoutingAdvisorConfig.MAX_TIME_SECONDS,
-                        (current, value) -> current.withRoutingAdvisor(
-                                current.routingAdvisor().withInsignificantTimeSeconds(value)),
-                        current -> current.withRoutingAdvisor(current.routingAdvisor().withInsignificantTimeSeconds(
-                                RoutingAdvisorConfig.defaults().insignificantTimeSeconds())),
-                        "negligible insignificant delay time seconds threshold");
-                addIntegerRow(
-                        "Negligible cost",
-                        "Cost differences at or below this many emeralds are insignificant (0-16777216).",
-                        advisor.insignificantCostEmeralds(),
-                        RoutingAdvisorConfig.MIN_COST_EMERALDS,
-                        RoutingAdvisorConfig.MAX_COST_EMERALDS,
-                        (current, value) -> current.withRoutingAdvisor(
-                                current.routingAdvisor().withInsignificantCostEmeralds(value)),
-                        current -> current.withRoutingAdvisor(current.routingAdvisor().withInsignificantCostEmeralds(
-                                RoutingAdvisorConfig.defaults().insignificantCostEmeralds())),
-                        "negligible insignificant cost emeralds threshold");
+                                current.routingAdvisor().withBlockAttackWhenFastestIsFaster(
+                                        !current.routingAdvisor().blockAttackWhenFastestIsFaster())),
+                        current -> current.withRoutingAdvisor(
+                                current.routingAdvisor().withBlockAttackWhenFastestIsFaster(
+                                        RoutingAdvisorConfig.defaults().blockAttackWhenFastestIsFaster())),
+                        "block click faster queuing fastest cheapest confirmation attack hq");
             }
             case OPTIMIZER -> {
                 SyllyConfig config = settings.snapshot();

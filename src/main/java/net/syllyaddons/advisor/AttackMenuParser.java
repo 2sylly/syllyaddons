@@ -53,7 +53,8 @@ public final class AttackMenuParser {
                 if (timer.isEmpty() && (timerContext || containsAny(line, "timer", "time", "duration", "minute", " min"))) {
                     timer = parseTimer(line);
                 }
-                if (routeContext || containsAny(line, "route", "path", "→", "->")) {
+                if (routeContext || containsAny(
+                        line, "route", "path", "→", "->", "➜", "➔", "➤", "➡", "✔", "✓", "✖", "✕", "✗")) {
                     appendTerritories(route, line, canonicalNames);
                 }
             }

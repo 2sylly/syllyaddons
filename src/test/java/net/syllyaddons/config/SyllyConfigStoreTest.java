@@ -52,8 +52,6 @@ class SyllyConfigStoreTest {
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withSnapshotRetention(0));
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withEcoWarningCooldownSeconds(601));
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withImpactAlertDurationSeconds(1));
-        assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withRoutingAdvisor(
-                RoutingAdvisorConfig.defaults().withMaximumAdditionalCostEmeralds(16_777_217)));
         assertThrows(IllegalArgumentException.class, () -> SyllyConfig.defaults().withOptimizer(
                 OptimizerConfig.defaults().withReserveFloorPercent(101)));
     }
@@ -83,18 +81,28 @@ class SyllyConfigStoreTest {
     }
 
     @Test
-    void persistsTrack9AdvisorThresholds() throws Exception {
+    void persistsTrack9AttackClickGuard() throws Exception {
         Path destination = temporaryDirectory.resolve("settings.json");
         SyllyConfigStore store = new SyllyConfigStore(destination, () -> 123L);
         SyllyConfig updated = SyllyConfig.defaults().withRoutingAdvisor(
-                RoutingAdvisorConfig.defaults()
-                        .withMinimumTimeSavingSeconds(120)
-                        .withMaximumAdditionalCostEmeralds(9_999)
-                        .withActiveOperationsOnly(false));
+                RoutingAdvisorConfig.defaults().withBlockAttackWhenFastestIsFaster(false));
 
         store.save(updated);
 
         assertEquals(updated, store.loadOrCreate().config());
+    }
+
+    @Test
+    void fillsNewNestedAdvisorFieldsInAnExistingSettingsFile() throws Exception {
+        Path destination = temporaryDirectory.resolve("settings.json");
+        Gson gson = new Gson();
+        var document = gson.toJsonTree(SyllyConfig.defaults()).getAsJsonObject();
+        document.getAsJsonObject("routingAdvisor").remove("blockAttackWhenFastestIsFaster");
+        Files.writeString(destination, gson.toJson(document));
+
+        SyllyConfig loaded = new SyllyConfigStore(destination, () -> 123L).loadOrCreate().config();
+
+        assertTrue(loaded.routingAdvisor().blockAttackWhenFastestIsFaster());
     }
 
     @Test

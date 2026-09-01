@@ -5,6 +5,10 @@ import java.util.Optional;
 import java.util.Set;
 import net.syllyaddons.config.SyllyConfig;
 import net.syllyaddons.config.SyllyConfigService;
+import net.syllyaddons.domain.Evidence;
+import net.syllyaddons.domain.EvidenceKind;
+import net.syllyaddons.domain.ObservedValue;
+import net.syllyaddons.observation.ObservationBatch;
 import net.syllyaddons.observation.ObservedStateRepository;
 
 /** Thread-safe state holder between passive Wynntils observations and client rendering. */
@@ -39,8 +43,22 @@ public final class AttackAdvisorService {
         Set<String> territoryNames = repository.snapshot().territories().keySet();
         AttackMenuSnapshot menu = parser.parse(title, entries, territoryNames, nowEpochMillis);
         if (menu.target().isBlank()) return;
-        AttackRoutingAdvice advice = advisor.advise(
-                repository.snapshot(), menu, config.routingAdvisor(), nowEpochMillis);
+        AttackRoutingAdvice advice = advisor.advise(repository.snapshot(), menu, nowEpochMillis);
+        if (advice.routingModeInferred()) {
+            Evidence evidence = new Evidence(
+                    EvidenceKind.DERIVED,
+                    nowEpochMillis,
+                    "attack-menu-timer",
+                    "routing-rules-2026-08-29",
+                    "Uniquely matched the displayed attack timer/route to a local routing candidate");
+            repository.merge(new ObservationBatch(
+                    nowEpochMillis,
+                    null,
+                    null,
+                    null,
+                    ObservedValue.known(advice.resolvedRoutingMode(), evidence),
+                    java.util.Map.of()));
+        }
         latest = new AttackAdvisorView(menu, advice, null, nowEpochMillis);
     }
 

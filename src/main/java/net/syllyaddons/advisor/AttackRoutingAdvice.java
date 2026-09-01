@@ -1,6 +1,7 @@
 package net.syllyaddons.advisor;
 
 import java.util.List;
+import net.syllyaddons.domain.RoutingMode;
 
 public record AttackRoutingAdvice(
         String target,
@@ -10,6 +11,9 @@ public record AttackRoutingAdvice(
         int timeSavedSeconds,
         long additionalCostEmeralds,
         AttackAdviceDecision decision,
+        RoutingMode resolvedRoutingMode,
+        boolean routingModeInferred,
+        boolean routingObservationNeeded,
         List<String> diagnostics,
         long calculatedAtEpochMillis) {
     public AttackRoutingAdvice {
@@ -18,6 +22,9 @@ public record AttackRoutingAdvice(
         decision = java.util.Objects.requireNonNull(decision, "decision");
         diagnostics = diagnostics == null ? List.of() : List.copyOf(diagnostics);
         if (calculatedAtEpochMillis < 0) throw new IllegalArgumentException("calculatedAtEpochMillis must be non-negative");
+        if (routingModeInferred && resolvedRoutingMode == null) {
+            throw new IllegalArgumentException("An inferred routing mode must be resolved");
+        }
     }
 
     public boolean available() {

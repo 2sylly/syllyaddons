@@ -45,8 +45,15 @@ versions with the result.
 - [ ] Open the guild map and confirm impact regions and route highlights align through zoom and pan.
 - [ ] Open territory management for a guild with no HQ; confirm map mode centers all held territories and uses the
   closest zoom that keeps every held territory inside the map border.
-- [ ] Open an attack menu and compare the observed/current timer and cost with the passive advisor.
-- [ ] Queue one attack manually and confirm timer validation reports match or a clear Calculation Disagreement.
+- [ ] Open an attack menu and confirm the panel exists only on that screen and parses the live Attack item's route,
+  `Price`, and `Time to Start` lines.
+- [ ] With HQ routing unknown, confirm a uniquely matching timer records the inferred mode; an ambiguous timer asks for
+  HQ management without guessing.
+- [ ] Right-click the ambiguity prompt and confirm the observed HQ management menu opens without changing routing.
+- [ ] With Fastest strictly quicker and click blocking enabled, left-click Attack and confirm the modal shows the exact
+  saving. Confirm ordinary clicks remain blocked, right-click opens HQ management, and shift-left-click attacks once.
+- [ ] Confirm equal-time, unavailable, disabled-setting, non-Attack-slot, and failed-accessor cases never block a click.
+- [ ] Queue one attack and confirm timer validation reports match or a clear Calculation Disagreement.
 - [ ] Run the optimizer; confirm baseline retention, bounded termination, independent revalidation, and no Apply action.
 - [ ] Export/import/compare a snapshot and confirm imported data stays read-only.
 
@@ -54,7 +61,8 @@ versions with the result.
 
 - [ ] With an incomplete menu scan, confirm the operations screen says Missing Data rather than Integration Failure.
 - [ ] Exercise a timer mismatch fixture and confirm it says Calculation Disagreement.
-- [ ] Confirm a failed optional map accessor disables the map layer without disabling unrelated screens or listeners.
+- [ ] Confirm a failed optional map accessor disables the map layer without disabling unrelated screens or listeners;
+  a failed container-position accessor must fail the click guard open.
 - [ ] Restore the pinned build and re-run the normal launch check before merging.
 
 ## Current pin

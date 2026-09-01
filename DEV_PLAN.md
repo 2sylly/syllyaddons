@@ -7,7 +7,7 @@ Build a private, client-side companion mod for Minecraft 1.21.11 that uses Wynnt
 - per-character spell-key profiles;
 - guild economy inspection and explanations;
 - territory-loss simulation and alerts;
-- HQ attack-routing advice;
+- HQ attack-routing advice with an optional explicit confirmation guard;
 - read-only snapshots and comparisons;
 - a defence-sustainability optimizer.
 
@@ -30,14 +30,15 @@ These decisions reduce early work and make version-coupled integration acceptabl
 
 ## 3. Non-negotiable safety boundary
 
-The addon may observe, cache, calculate, highlight, recommend, export, and notify. It must not:
+The addon may observe, cache, calculate, highlight, recommend, export, notify, and require explicit confirmation. It must not:
 
 - change territory upgrades or tower settings;
 - apply an economy snapshot;
 - change HQ routing;
-- queue an attack;
+- queue an attack without the player's explicit shift-left-click confirmation of the Attack item they just selected;
 - react to a guild event by changing guild state;
-- send automated competitive-menu clicks or packets.
+- send automated competitive-menu clicks or packets. The Track 9 guard may replay only the exact blocked Attack-slot
+  click after explicit confirmation, and may open HQ management only after an explicit right-click on its own UI.
 
 Exact menu-only data is captured passively while the user has the relevant screen open. If required information has not been observed, the UI must say so instead of silently inventing it.
 
@@ -387,7 +388,7 @@ Acceptance gate:
 
 ### Track 9 — HQ attack-routing advisor
 
-**Outcome:** Preparing an attack shows a read-only Cheapest-versus-Fastest comparison.
+**Outcome:** Preparing an attack shows a Cheapest-versus-Fastest comparison and can guard a slower queue choice.
 
 Tasks:
 
@@ -395,16 +396,19 @@ Tasks:
 - [x] Determine or capture attack cost and timer inputs without clicking or queueing.
 - [x] Calculate both modes using the versioned routing rules and label research inputs.
 - [x] Show time saved and additional cost.
-- [x] Detect when Cheapest is preferable for negligible delay.
-- [x] Add minimum saving, maximum extra cost, active-operation-only, and significance thresholds.
+- [x] Recommend Fastest for every positive queue-time saving, regardless of estimated added cost.
+- [x] Keep the advisor visible only while the matching attack screen is open.
+- [x] Infer missing routing only when the displayed timer/path uniquely matches one candidate.
+- [x] Prompt for HQ management when routing remains ambiguous.
+- [x] Add an optional Attack-item click guard with explicit HQ-management and attack-confirmation gestures.
 - [x] Mark results unavailable when required inputs are not observable or current-route validation disagrees.
 
 Acceptance gate:
 
 - Advice matches several manually checked attack preparations.
-- No advisor path sends a click, command, or packet that changes attack state.
+- No advisor event acts autonomously; only the documented right-click and shift-left-click gestures may act.
 
-Implementation status: parser, comparison, refusal, settings, and source-level safety paths are automated; several live
+Implementation status: parser, comparison, inference, refusal, settings, guarded interaction, and tests are automated; several live
 attack preparations on the pinned client remain the manual acceptance check.
 
 ### Track 10 — Defence-sustainability optimizer
@@ -527,7 +531,7 @@ Deliverable:
 
 - enemy impact estimates with evidence labels;
 - dual-mode calculation for unknown routing;
-- read-only HQ attack-routing advice.
+- HQ attack-routing advice with an explicit slower-queue guard.
 
 ### Milestone F — Optimization
 

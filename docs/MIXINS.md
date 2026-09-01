@@ -1,6 +1,6 @@
 # Wynntils mixin inventory
 
-Sylly Addons has one client-only mixin. The inventory is intentionally exact: adding another mixin requires updating
+Sylly Addons has two client-only accessor mixins. The inventory is intentionally exact: adding another mixin requires updating
 this document, the pinned compatibility checks, and the Wynntils upgrade smoke test.
 
 ## `AbstractMapScreenAccessor`
@@ -18,4 +18,17 @@ this document, the pinned compatibility checks, and the Wynntils upgrade smoke t
   observation, snapshots, auditor, attack advisor, and optimizer remain available.
 - **Remapping:** disabled because the target is a version-pinned Wynntils class, not a Minecraft mapped class.
 
-No mixin accesses gameplay actions, container clicks, commands, attack queueing, or guild configuration.
+## `AbstractContainerScreenAccessor`
+
+- **Target:** Minecraft 1.21.11's `AbstractContainerScreen`.
+- **Type:** accessor only; it does not inject, overwrite, redirect, or change execution.
+- **Fields read:** `leftPos` and `topPos`.
+- **Reason:** the optional attack-click guard must translate the mouse location into an inventory slot without assuming
+  a fixed slot number.
+- **Consumer:** `AttackAdvisorOverlayController`.
+- **Failure behavior:** if the accessor is unavailable, route advice remains visible and normal clicks pass through; the
+  optional click guard cannot identify the Attack item and therefore does not block anything.
+- **Remapping:** enabled because this targets a Minecraft mapped class.
+
+Neither mixin injects gameplay behavior. The controller may act only after the user explicitly right-clicks the guarded
+dialog/prompt or shift-left-clicks the confirmation described in the Track 9 safety rules.

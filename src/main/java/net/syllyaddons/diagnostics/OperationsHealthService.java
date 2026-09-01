@@ -200,7 +200,7 @@ public final class OperationsHealthService {
                             : "Recommendation withheld because required inputs are missing",
                     List.of(diagnostics.size() + " calculation diagnostics are available."));
         }
-        return SubsystemHealth.healthy(Subsystem.ROUTING_ADVISOR, "Latest passive recommendation is available");
+        return SubsystemHealth.healthy(Subsystem.ROUTING_ADVISOR, "Latest attack-screen recommendation is available");
     }
 
     private SubsystemHealth optimizerHealth(boolean enabled) {

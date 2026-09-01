@@ -5,9 +5,9 @@ Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.9.
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
 3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
 and provenance inspection, the Track 6 explainable eco auditor, the Track 7 cached territory-removal simulator, and
-Track 8 map overlays and refresh-aware loss alerts, the Track 9 passive attack-routing advisor, and the Track 10
+Track 8 map overlays and refresh-aware loss alerts, the Track 9 attack-routing advisor, and the Track 10
 bounded defence-sustainability optimizer, plus the Track 11 diagnostics and personal-operations layer. It
-collects and analyses available state without issuing commands, clicking menus, or changing guild state.
+collects and analyses available state without autonomous commands, menu clicks, or guild-state changes.
 
 ## Development setup
 
@@ -168,16 +168,17 @@ an exact loss timestamp. Character/world or guild boundaries clear queued alerts
 
 ## Track 9 attack-routing advisor
 
-Open a normal Wynncraft `Attacking: <territory>` menu to see a read-only comparison of Cheapest and Fastest. The panel
-shows each route's timer, emerald cost, hop count, Fastest's time saving and additional cost, and a threshold-based
-recommendation. The current routing mode's cost and timer are read from the already-open menu. The other mode's cost
-uses the versioned Track 4 route plus the explicitly labelled 70% foreign-tax research fallback.
+Open a normal Wynncraft `Attacking: <territory>` menu to compare Cheapest and Fastest. The panel exists only while that
+attack screen is open. It shows each route's timer, emerald cost, hop count, Fastest's time saving and additional cost;
+any positive time saving recommends Fastest. The current mode's cost and timer come from the displayed Attack item, and
+the other mode's cost uses the versioned Track 4 route plus the labelled 70% foreign-tax research fallback.
 
-Settings → Routing Advisor controls the minimum worthwhile time saving, maximum additional cost, active-operation-only
-display, and negligible time/cost thresholds. If target, cost, timer, guild, HQ, routing mode, topology, or a consistent
-current route cannot be observed, the panel says the recommendation is unavailable. When the player queues a war
-themselves, Wynntils' resulting timer event is compared with the displayed timer for ten seconds; it is never used to
-queue anything. See [the advisor evidence and safety rules](docs/ATTACK_ROUTING_ADVISOR.md).
+If HQ routing was not captured from territory management, a timer/path that uniquely matches one calculated mode is
+recorded as derived routing evidence. An ambiguous match asks the player to right-click the panel to open HQ management.
+Settings → Routing Advisor includes **Block click when faster queuing is available**. When enabled and Fastest is
+proven quicker, a normal click on the actual Attack item is stopped by a confirmation overlay. Right-click opens HQ
+management; shift-left-click confirms the original Attack action. See
+[the advisor evidence and safety rules](docs/ATTACK_ROUTING_ADVISOR.md).
 
 ## Track 10 defence-sustainability optimizer
 
@@ -210,16 +211,27 @@ layers; `./gradlew performanceTest` separately exercises a 405-territory all-tar
 captures stay isolated in `src/test/resources/fixtures`. See the [pinned upgrade smoke test](docs/WYNNTILS_UPGRADE_SMOKE_TEST.md)
 and [complete mixin inventory](docs/MIXINS.md).
 
+## Optional local development recorder
+
+`dev-recorder` builds a separate development-only JAR. Press **F9** once to start and again to stop; it writes a
+reviewable JSON-lines session under `config/sylly-dev-recorder/sessions` in the active Minecraft instance. It records
+screen/container layout, visible item names/lore, clicks, gameplay input mappings, and relevant Wynntils events. It is
+off by default and has no network, chat-text, typed-character, clipboard, or screenshot capture. See the
+[recorder usage and privacy notes](dev-recorder/README.md).
+
 ## Safety
 
-Tracks 1–11 have no code path that sends a command, clicks a container slot, queues an attack, changes HQ routing, or modifies
-guild configuration. Container and advancement handlers consume post-observation events only.
+Tracks 1–11 never issue autonomous commands, container clicks, attacks, routing changes, or guild-configuration changes.
+Track 9 has two narrow user-confirmed paths: right-clicking its prompt sends the normal HQ-management command, and
+shift-left-clicking its faster-route confirmation repeats the exact Attack-slot click the guard just blocked. It never
+selects a routing mode or attacks in response to an event or timer.
 
 ## Current limitations
 
 - The F8 data-status screen remains the detailed provenance inspector; the Compatibility section now opens the Track
   11 operations summary and links to the same raw inspector.
-- The routing-mode text recognizer is deliberately strict and still needs validation against the live HQ screen.
+- The routing-mode text recognizer is deliberately strict; attack timer/path inference is accepted only when exactly
+  one locally calculated routing candidate matches.
 - Track 4's route ordering, current tax semantics, delivery timing, expense order, and storage behavior still need
   side-by-side live golden captures before the engine can report exact server parity.
 - Track 6 upgrade recommendations compare observed marginal output or headroom against version-pinned upkeep. They do
@@ -228,9 +240,9 @@ guild configuration. Container and advancement handlers consume post-observation
   production, tower supply, and strategic intent remain unavailable and cannot appear as exact.
 - Track 8 map colours and alerts are snapshots of the most recent completed cache. A loss can occur anywhere inside
   the displayed observation window; if the exact pre-loss cache entry is missing, no alert is shown.
-- Track 9 requires the live attack menu to expose a parseable cost and timer. The alternate route cost remains an
-  estimate until diplomacy/tax values and server route parity have live golden captures; any current-timer or displayed
-  route disagreement disables the recommendation instead of relaxing the guard.
+- Track 9 requires the live Attack item to expose a parseable cost and timer. The alternate route cost remains an
+  estimate until diplomacy/tax values and server route parity have live golden captures; ambiguous routing or any
+  timer/route disagreement disables both the recommendation and click guard instead of guessing.
 - Track 10 compares raw resource units without cross-resource market weights. Its one-hour projection inherits Track
   4's routing, foreign-tax, spending-order, production-effect, and storage assumptions. It refuses to run until every
   owned territory's production and upgrade levels plus HQ storage are observed.

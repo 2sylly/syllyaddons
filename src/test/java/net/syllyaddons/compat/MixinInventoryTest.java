@@ -16,7 +16,7 @@ class MixinInventoryTest {
             var document = JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
             assertFalse(document.get("required").getAsBoolean());
             assertEquals(
-                    List.of("AbstractMapScreenAccessor"),
+                    List.of("AbstractMapScreenAccessor", "AbstractContainerScreenAccessor"),
                     document.getAsJsonArray("client").asList().stream().map(value -> value.getAsString()).toList());
         }
     }

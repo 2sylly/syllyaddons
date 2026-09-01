@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
-import net.syllyaddons.config.RoutingAdvisorConfig;
+import java.nio.file.Path;
+import net.syllyaddons.config.SyllyConfigService;
+import net.syllyaddons.config.SyllyConfigStore;
 import net.syllyaddons.domain.Evidence;
 import net.syllyaddons.domain.EvidenceKind;
 import net.syllyaddons.domain.GuildIdentity;
@@ -18,7 +20,10 @@ import net.syllyaddons.domain.ObservedValue;
 import net.syllyaddons.domain.RoutingMode;
 import net.syllyaddons.domain.TerritoryOwner;
 import net.syllyaddons.domain.TerritoryState;
+import net.syllyaddons.observation.ObservedStateMerger;
+import net.syllyaddons.observation.ObservedStateRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class AttackRoutingAdvisorTest {
     private static final Evidence EVIDENCE =
@@ -27,12 +32,15 @@ class AttackRoutingAdvisorTest {
     private static final TerritoryOwner ENEMY = new TerritoryOwner("enemy", "Enemy", "ENY");
     private final AttackRoutingAdvisor advisor = new AttackRoutingAdvisor();
 
+    @TempDir
+    Path temporaryDirectory;
+
     @Test
     void comparesObservedCheapestAgainstEstimatedFastest() {
         ObservedState state = splitState(RoutingMode.CHEAPEST);
         AttackMenuSnapshot menu = menu(4_000, 300);
 
-        AttackRoutingAdvice advice = advisor.advise(state, menu, RoutingAdvisorConfig.defaults(), 2_000);
+        AttackRoutingAdvice advice = advisor.advise(state, menu, 2_000);
 
         assertTrue(advice.available());
         assertEquals(List.of("HQ", "O1", "O2", "O3", "Goal"), advice.cheapest().route().path());
@@ -43,24 +51,21 @@ class AttackRoutingAdvisorTest {
         assertEquals(11_560, advice.fastest().comparisonCostEmeralds());
         assertEquals(60, advice.timeSavedSeconds());
         assertEquals(7_560, advice.additionalCostEmeralds());
-        assertEquals(AttackAdviceDecision.FASTEST_WORTH_COST, advice.decision());
+        assertEquals(AttackAdviceDecision.FASTEST_FASTER, advice.decision());
         assertTrue(advice.cheapest().observedCostEmeralds().isPresent());
         assertTrue(advice.fastest().observedCostEmeralds().isEmpty());
     }
 
     @Test
-    void configuredCostCapCanPreferCheapest() {
-        RoutingAdvisorConfig config = RoutingAdvisorConfig.defaults().withMaximumAdditionalCostEmeralds(1_000);
-
-        AttackRoutingAdvice advice = advisor.advise(splitState(RoutingMode.CHEAPEST), menu(4_000, 300), config, 2_000);
-
-        assertEquals(AttackAdviceDecision.FASTEST_TOO_EXPENSIVE, advice.decision());
+    void oneSecondSavingAlwaysRecommendsFastest() {
+        assertEquals(AttackAdviceDecision.FASTEST_FASTER, AttackRoutingAdvisor.decide(1));
+        assertEquals(AttackAdviceDecision.SAME_QUEUE_TIME, AttackRoutingAdvisor.decide(0));
     }
 
     @Test
     void timerMismatchMakesRecommendationUnavailable() {
         AttackRoutingAdvice advice = advisor.advise(
-                splitState(RoutingMode.CHEAPEST), menu(4_000, 120), RoutingAdvisorConfig.defaults(), 2_000);
+                splitState(RoutingMode.CHEAPEST), menu(4_000, 120), 2_000);
 
         assertFalse(advice.available());
         assertEquals(AttackAdviceDecision.UNAVAILABLE, advice.decision());
@@ -74,7 +79,7 @@ class AttackRoutingAdvisorTest {
                 List.of("HQ", "F1", "F2", "Goal"), 1_000, List.of());
 
         AttackRoutingAdvice advice = advisor.advise(
-                splitState(RoutingMode.CHEAPEST), mismatched, RoutingAdvisorConfig.defaults(), 2_000);
+                splitState(RoutingMode.CHEAPEST), mismatched, 2_000);
 
         assertFalse(advice.available());
         assertTrue(advice.diagnostics().getLast().contains("Displayed route does not match"));
@@ -86,7 +91,7 @@ class AttackRoutingAdvisorTest {
                 "Goal", OptionalLong.empty(), OptionalInt.of(300), List.of(), 1_000, List.of());
 
         AttackRoutingAdvice advice = advisor.advise(
-                splitState(RoutingMode.CHEAPEST), incomplete, RoutingAdvisorConfig.defaults(), 2_000);
+                splitState(RoutingMode.CHEAPEST), incomplete, 2_000);
 
         assertFalse(advice.available());
         assertTrue(advice.diagnostics().getLast().contains("required"));
@@ -98,6 +103,68 @@ class AttackRoutingAdvisorTest {
 
         assertEquals(4_000, AttackRoutingAdvisor.estimatedAttackCost(List.of("HQ", "Goal"), state, 4));
         assertEquals(6_800, AttackRoutingAdvisor.estimatedAttackCost(List.of("HQ", "F1", "Goal"), state, 4));
+    }
+
+    @Test
+    void unknownModeIsInferredOnlyWhenTheTimerMatchesOneCandidate() {
+        AttackRoutingAdvice advice = advisor.advise(splitState(null), menu(4_000, 240), 2_000);
+
+        assertTrue(advice.available());
+        assertEquals(RoutingMode.FASTEST, advice.resolvedRoutingMode());
+        assertTrue(advice.routingModeInferred());
+        assertFalse(advice.routingObservationNeeded());
+        assertTrue(advice.fastest().observedTimerSeconds().isPresent());
+    }
+
+    @Test
+    void ambiguousTimerPromptsForHqManagementInsteadOfGuessing() {
+        AttackRoutingAdvice advice = advisor.advise(singleRouteState(), menu(4_000, 180), 2_000);
+
+        assertFalse(advice.available());
+        assertTrue(advice.routingObservationNeeded());
+        assertTrue(advice.diagnostics().getLast().contains("HQ management"));
+    }
+
+    @Test
+    void servicePersistsAUniqueTimerInferenceAsObservedRoutingEvidence() {
+        ObservedStateRepository repository = new ObservedStateRepository(
+                splitState(null), new ObservedStateMerger());
+        SyllyConfigService settings = SyllyConfigService.open(
+                new SyllyConfigStore(temporaryDirectory.resolve("settings.json")));
+        AttackAdvisorService service = new AttackAdvisorService(repository, settings);
+
+        service.observeMenu(
+                "Attacking: Goal",
+                List.of(
+                        new AttackMenuEntry("Attack Cost", List.of("Price: 4,000 emeralds")),
+                        new AttackMenuEntry("Queue Timer", List.of("Time to Start: 4m"))),
+                2_000);
+
+        assertTrue(repository.snapshot().routingMode().isKnown());
+        assertEquals(RoutingMode.FASTEST, repository.snapshot().routingMode().value());
+        assertEquals(EvidenceKind.DERIVED, repository.snapshot().routingMode().evidence().kind());
+    }
+
+    @Test
+    void aLaterUniqueTimerCanRefreshPreviouslyDerivedRouting() {
+        ObservedState initial = splitState(null);
+        Evidence derived = new Evidence(
+                EvidenceKind.DERIVED, 1_500, "attack-menu-timer", "routing-rules-2026-08-29", "old inference");
+        ObservedState previouslyFastest = new ObservedState(
+                initial.schemaVersion(),
+                initial.revision(),
+                initial.assembledAtEpochMillis(),
+                initial.character(),
+                initial.guild(),
+                initial.hqTerritory(),
+                ObservedValue.known(RoutingMode.FASTEST, derived),
+                initial.territories());
+
+        AttackRoutingAdvice advice = advisor.advise(previouslyFastest, menu(4_000, 300), 2_000);
+
+        assertTrue(advice.available());
+        assertEquals(RoutingMode.CHEAPEST, advice.resolvedRoutingMode());
+        assertTrue(advice.routingModeInferred());
     }
 
     private static AttackMenuSnapshot menu(long cost, int timer) {
@@ -119,7 +186,21 @@ class AttackRoutingAdvisorTest {
                 ObservedValue.unknown("unused"),
                 ObservedValue.known(new GuildIdentity("guild", "Guild", "TAG"), EVIDENCE),
                 ObservedValue.known("HQ", EVIDENCE),
-                ObservedValue.known(mode, EVIDENCE),
+                mode == null ? ObservedValue.unknown("not observed") : ObservedValue.known(mode, EVIDENCE),
+                territories);
+    }
+
+    private static ObservedState singleRouteState() {
+        Map<String, TerritoryState> territories = new LinkedHashMap<>();
+        add(territories, territory("HQ", OWN, "Middle"));
+        add(territories, territory("Middle", OWN, "HQ", "Goal"));
+        add(territories, territory("Goal", ENEMY, "Middle"));
+        return new ObservedState(
+                1, 1, 1_000,
+                ObservedValue.unknown("unused"),
+                ObservedValue.known(new GuildIdentity("guild", "Guild", "TAG"), EVIDENCE),
+                ObservedValue.known("HQ", EVIDENCE),
+                ObservedValue.unknown("not observed"),
                 territories);
     }
 
