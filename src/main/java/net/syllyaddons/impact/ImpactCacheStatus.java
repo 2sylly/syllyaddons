@@ -4,6 +4,7 @@ public enum ImpactCacheStatus {
     EMPTY,
     BUILDING,
     READY,
+    UNAVAILABLE,
     FAILED,
     CLOSED
 }

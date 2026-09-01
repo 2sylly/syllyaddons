@@ -50,6 +50,36 @@ class TerritoryImpactCacheTest {
         }
     }
 
+    @Test
+    void missingHeadquartersIsUnavailableRatherThanAnInternalFailure() throws Exception {
+        TerritoryImpactCache cache = new TerritoryImpactCache(
+                new TerritoryImpactComputer() {
+                    @Override
+                    public ImpactBaseline buildBaseline(ObservedState state, long nowEpochMillis) {
+                        throw new ImpactUnavailableException("An observed headquarters is required");
+                    }
+
+                    @Override
+                    public TerritoryImpactReport simulate(ImpactBaseline baseline, String removedTerritory) {
+                        throw new AssertionError("simulate must not be reached");
+                    }
+                },
+                new ImpactCacheKeyFactory(),
+                Executors.newSingleThreadExecutor());
+        try {
+            cache.request(state(10), 2_000);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
+            while (cache.view().status() == ImpactCacheStatus.BUILDING && System.nanoTime() < deadline) {
+                Thread.sleep(5);
+            }
+            assertEquals(ImpactCacheStatus.UNAVAILABLE, cache.view().status());
+            assertEquals("An observed headquarters is required", cache.view().message());
+            assertTrue(cache.view().completedReports().isEmpty());
+        } finally {
+            cache.close();
+        }
+    }
+
     private static ImpactCacheView awaitReady(TerritoryImpactCache cache, long revision) throws InterruptedException {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
         while (System.nanoTime() < deadline) {

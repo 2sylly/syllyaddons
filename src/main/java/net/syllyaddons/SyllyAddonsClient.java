@@ -31,6 +31,7 @@ import net.syllyaddons.client.gui.RouteHighlightController;
 import net.syllyaddons.client.gui.SpellProfileController;
 import net.syllyaddons.client.gui.SyllySettingsController;
 import net.syllyaddons.client.gui.TerritoryImpactOverlayController;
+import net.syllyaddons.client.gui.TerritoryManagementAutoFocusController;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.config.SyllyConfigStore;
 import net.syllyaddons.domain.ObservedState;
@@ -138,6 +139,7 @@ public final class SyllyAddonsClient implements ClientModInitializer {
                 () -> territoryImpactCache,
                 () -> settingsService);
         RouteHighlightController.register();
+        TerritoryManagementAutoFocusController.register(() -> repository);
         attackAdvisorService = new AttackAdvisorService(repository, settingsService);
         optimizerService = new OptimizerService(repository);
         subsystemHealth.healthy(Subsystem.OPTIMIZER, "Bounded optimizer initialized");

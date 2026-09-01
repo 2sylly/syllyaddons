@@ -32,4 +32,10 @@ public interface AbstractMapScreenAccessor {
 
     @Accessor("renderHeight")
     float syllyaddons$getRenderHeight();
+
+    @Accessor("mapWidth")
+    float syllyaddons$getMapWidth();
+
+    @Accessor("mapHeight")
+    float syllyaddons$getMapHeight();
 }

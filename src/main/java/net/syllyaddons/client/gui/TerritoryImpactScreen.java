@@ -198,9 +198,12 @@ public final class TerritoryImpactScreen extends Screen {
     private int renderDetails(GuiGraphics graphics, int x, int y, int availableWidth) {
         TerritoryImpactReport report = selectedReport();
         if (report == null) {
-            graphics.drawString(font, cacheView.status() == ImpactCacheStatus.FAILED
-                    ? "Impact cache unavailable" : "Building impact cache", x, y,
-                    cacheView.status() == ImpactCacheStatus.FAILED ? CRITICAL : WARNING, false);
+            boolean failed = cacheView.status() == ImpactCacheStatus.FAILED;
+            boolean unavailable = cacheView.status() == ImpactCacheStatus.UNAVAILABLE;
+            graphics.drawString(font, failed
+                    ? "Impact cache failed"
+                    : unavailable ? "Impact simulation unavailable" : "Building impact cache", x, y,
+                    failed ? CRITICAL : WARNING, false);
             y += 16;
             return drawWrapped(graphics, cacheView.message(), x, y, availableWidth, MUTED);
         }
@@ -375,6 +378,7 @@ public final class TerritoryImpactScreen extends Screen {
                     + (cacheView.reportsAreStale() ? " · previous completed cache shown as stale" : "");
             case READY -> "Ready · revision " + cacheView.requestedRevision() + " · "
                     + cacheView.completedReports().size() + " territories · " + cacheView.buildDurationMillis() + "ms";
+            case UNAVAILABLE -> "Unavailable: " + cacheView.message();
             case FAILED -> "Could not build impact cache: " + cacheView.message();
             case CLOSED -> "Impact cache is closed.";
         };
@@ -384,7 +388,7 @@ public final class TerritoryImpactScreen extends Screen {
         return switch (cacheView.status()) {
             case READY -> GOOD;
             case FAILED, CLOSED -> CRITICAL;
-            case EMPTY, BUILDING -> WARNING;
+            case EMPTY, BUILDING, UNAVAILABLE -> WARNING;
         };
     }
 

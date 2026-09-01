@@ -141,10 +141,15 @@ The cache key covers ownership, ordered topology, bounds, HQ, routing mode, tax 
 upgrade inputs. Builds run off the render thread, old work is cancelled and generation-checked, and consumers can only
 look up immutable completed maps in constant time. A previous completed map can remain visible while a new generation
 builds, but is labelled stale. Connectivity and chokepoints can be exact when topology evidence is complete; selected
-routes and all economy/severity results remain estimated. Enemy economy is never invented. See
+routes and all economy/severity results remain estimated. A guild with no observed HQ reports the simulator as
+unavailable rather than as an internal failure. Enemy economy is never invented. See
 [the impact rule ledger](docs/TERRITORY_IMPACT_RULES.md).
 
 ## Track 8 map overlays and live alerts
+
+Opening Wynntils' territory management screen automatically centers the combined bounds of every observed territory
+held by the current guild. It chooses the closest Wynntils zoom level that keeps the complete set inside the actual map
+viewport, including a small edge margin, and works without an HQ.
 
 The Wynntils guild map can now colour territory regions from the last completed impact cache. Grey means no material
 cached change; yellow, orange, red, and purple correspond to minor, warning, critical, and catastrophic impact. Hover

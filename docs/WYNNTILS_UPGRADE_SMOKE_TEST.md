@@ -43,6 +43,8 @@ versions with the result.
 - [ ] Open the Eco Auditor and inspect at least one formula/provenance drill-down.
 - [ ] Build the territory-impact cache and confirm every target completes without blocking rendering.
 - [ ] Open the guild map and confirm impact regions and route highlights align through zoom and pan.
+- [ ] Open territory management for a guild with no HQ; confirm map mode centers all held territories and uses the
+  closest zoom that keeps every held territory inside the map border.
 - [ ] Open an attack menu and compare the observed/current timer and cost with the passive advisor.
 - [ ] Queue one attack manually and confirm timer validation reports match or a clear Calculation Disagreement.
 - [ ] Run the optimizer; confirm baseline retention, bounded termination, independent revalidation, and no Apply action.

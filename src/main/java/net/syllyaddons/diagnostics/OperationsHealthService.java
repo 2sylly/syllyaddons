@@ -145,6 +145,12 @@ public final class OperationsHealthService {
                     DiagnosticCategory.WAITING,
                     "Rebuilding " + view.completedTargets() + "/" + view.totalTargets(),
                     List.of());
+            case UNAVAILABLE -> health(
+                    Subsystem.TERRITORY_IMPACT,
+                    SubsystemHealthStatus.DEGRADED,
+                    DiagnosticCategory.MISSING_DATA,
+                    "Unavailable while the guild has no observed headquarters",
+                    List.of("Territory-impact routing needs an HQ; this is not an internal failure."));
             case FAILED -> health(
                     Subsystem.TERRITORY_IMPACT,
                     SubsystemHealthStatus.FAILED,

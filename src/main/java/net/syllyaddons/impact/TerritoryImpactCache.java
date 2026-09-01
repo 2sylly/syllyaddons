@@ -52,7 +52,9 @@ public final class TerritoryImpactCache implements AutoCloseable {
         String key = keyFactory.create(state);
         ImpactCacheView current = view.get();
         if (!force && key.equals(current.cacheKey())
-                && (current.status() == ImpactCacheStatus.BUILDING || current.status() == ImpactCacheStatus.READY)) {
+                && (current.status() == ImpactCacheStatus.BUILDING
+                        || current.status() == ImpactCacheStatus.READY
+                        || current.status() == ImpactCacheStatus.UNAVAILABLE)) {
             return current.generation();
         }
 
@@ -133,6 +135,21 @@ public final class TerritoryImpactCache implements AutoCloseable {
                     duration,
                     Map.copyOf(reports),
                     "Impact cache ready",
+                    false));
+        } catch (ImpactUnavailableException exception) {
+            if (obsolete(requestedGeneration)) return;
+            long duration = Math.max(0, (System.nanoTime() - started) / 1_000_000L);
+            view.set(new ImpactCacheView(
+                    ImpactCacheStatus.UNAVAILABLE,
+                    requestedGeneration,
+                    state.revision(),
+                    key,
+                    0,
+                    state.territories().size(),
+                    0,
+                    duration,
+                    Map.of(),
+                    exception.getMessage() == null ? "Required impact inputs are unavailable" : exception.getMessage(),
                     false));
         } catch (RuntimeException exception) {
             if (obsolete(requestedGeneration)) return;
