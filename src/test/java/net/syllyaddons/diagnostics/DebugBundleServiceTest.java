@@ -59,7 +59,7 @@ class DebugBundleServiceTest {
                     registry, repository, settings, () -> null, advisor, cache, optimizer);
             DebugBundleService bundles = new DebugBundleService(
                     temporaryDirectory.resolve("debug-bundles"),
-                    Map.of("wynntils", "4.2.8", "syllyaddons", "test"),
+                    Map.of("wynntils", "4.2.9", "syllyaddons", "test"),
                     repository,
                     health,
                     advisor,
@@ -74,7 +74,7 @@ class DebugBundleServiceTest {
                     archive.entries());
             assertTrue(archive.contents().contains("territory-001"));
             assertTrue(archive.contents().contains("guild-1"));
-            assertTrue(archive.contents().contains("4.2.8"));
+            assertTrue(archive.contents().contains("4.2.9"));
             assertFalse(archive.contents().contains("character-secret"));
             assertFalse(archive.contents().contains("guild-secret-uuid"));
             assertFalse(archive.contents().contains("Secret Guild"));
@@ -87,7 +87,7 @@ class DebugBundleServiceTest {
 
     private static ObservedState state() {
         Evidence evidence = new Evidence(
-                EvidenceKind.LOCAL_EXACT, 9_000, "fixture", "4.2.8", "Secret Guild / PlayerSecret note");
+                EvidenceKind.LOCAL_EXACT, 9_000, "fixture", "4.2.9", "Secret Guild / PlayerSecret note");
         TerritoryState territory = new TerritoryState(
                 "Secret Territory",
                 ObservedValue.known(new TerritoryOwner("guild-secret-uuid", "Secret Guild", "SG"), evidence),

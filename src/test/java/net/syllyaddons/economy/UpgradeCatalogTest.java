@@ -30,7 +30,7 @@ class UpgradeCatalogTest {
     @Test
     void ignoresUnknownOrInvalidValuesInsteadOfCrashingHistoricalAnalysis() {
         Map<ResourceType, Double> expenses = UpgradeCatalog.expensesPerHour(Map.of(
-                "NOT_FROM_4_2_8", 1,
+                "NOT_FROM_4_2_9", 1,
                 "DAMAGE", 99));
 
         assertEquals(Map.of(), expenses);

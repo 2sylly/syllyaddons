@@ -1,4 +1,4 @@
-package net.syllyaddons.compat.wynntils.v4_2_8;
+package net.syllyaddons.compat.wynntils.v4_2_9;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,9 +11,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
 public final class WynntilsCompatibilityGuard {
-    public static final String SUPPORTED_VERSION = "4.2.8";
+    public static final String SUPPORTED_VERSION = "4.2.9";
     public static final String SUPPORTED_SHA256 =
-            "00369b5950a9522b8feed3122a4ec15dd581347c8fa868670650b76bac1380f6";
+            "faf32c32c5ce3af3b7236a19c5b8b8c6fb44695bf4340a9083bd2eae744858ef";
 
     public CompatibilityResult validate() {
         FabricLoader loader = FabricLoader.getInstance();
@@ -33,7 +33,7 @@ public final class WynntilsCompatibilityGuard {
 
         if (loader.isDevelopmentEnvironment()) {
             return new CompatibilityResult(
-                    true, "Wynntils 4.2.8 metadata matches; development remapping bypasses the release checksum");
+                    true, "Wynntils 4.2.9 metadata matches; development remapping bypasses the release checksum");
         }
 
         Path modJar = wynntils.getOrigin().getPaths().stream()
@@ -46,13 +46,13 @@ public final class WynntilsCompatibilityGuard {
             String actualHash = sha256(modJar);
             if (!SUPPORTED_SHA256.equalsIgnoreCase(actualHash)) {
                 return new CompatibilityResult(
-                        false, "Wynntils 4.2.8 JAR checksum differs from the tested private build: " + actualHash);
+                        false, "Wynntils 4.2.9 JAR checksum differs from the tested private build: " + actualHash);
             }
         } catch (IOException exception) {
             return new CompatibilityResult(false, "Could not verify the Wynntils JAR: " + exception.getMessage());
         }
 
-        return new CompatibilityResult(true, "Wynntils 4.2.8 matches the pinned private build");
+        return new CompatibilityResult(true, "Wynntils 4.2.9 matches the pinned private build");
     }
 
     private static String sha256(Path path) throws IOException {

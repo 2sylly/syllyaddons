@@ -11,7 +11,7 @@ it is not a configuration file and importing one has no path to the live observa
   "createdAtEpochMillis": 1787994000000,
   "sourceVersions": {
     "minecraft": "1.21.11",
-    "wynntils": "4.2.8",
+    "wynntils": "4.2.9",
     "syllyaddons": "0.1.0-dev",
     "routingRules": "routing-research-2026-08-29.1",
     "economyRules": "economy-research-2026-08-29.1"

@@ -9,7 +9,7 @@ be selected without rewriting captured data.
 The [official Wynncraft API repository](https://github.com/Wynncraft/WynncraftAPI) identifies the territory API but does
 not document the server's route-selection implementation or promise that a returned connection array has the same
 order as the game's internal connection list. The
-[Wynntils 4.2.8 source](https://github.com/Wynntils/Wynntils/tree/v4.2.8) retains server-provided trading routes,
+[Wynntils 4.2.9 source](https://github.com/Wynntils/Wynntils/tree/v4.2.9) retains server-provided trading routes,
 production, and storage for display; no client-side server-equivalent route/economy calculator was found there.
 
 The current Cheapest hypothesis came from user-supplied community research:

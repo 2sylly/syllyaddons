@@ -56,6 +56,29 @@ class SpellProfileServiceTest {
     }
 
     @Test
+    void sameCharacterObservationRestoresBindingsAfterWorldSessionClear() {
+        SpellProfileService service = new SpellProfileService(
+                new SpellProfileStore(temporaryDirectory.resolve("world-hop-profiles.json")),
+                ignored -> SpellCastResult.QUEUED,
+                () -> List.of(new SpellBinding(new PhysicalInput(InputDevice.KEYSYM, 81), 1)),
+                ignored -> {});
+        ObservedState sameCharacter = stateFor("c25d20ba", "MAGE");
+        service.initialize(sameCharacter);
+        SpellProfile assigned = service.createProfile()
+                .withBinding(4, new PhysicalInput(InputDevice.KEYSYM, 82));
+        service.updateProfile(assigned);
+        service.assignCharacter("c25d20ba", assigned.id());
+
+        service.clearSession();
+        assertFalse(service.spellForInput(new PhysicalInput(InputDevice.KEYSYM, 82)).isPresent());
+
+        service.onObservedState(sameCharacter);
+
+        assertEquals(assigned.id(), service.activeResolution().profile().id());
+        assertEquals(4, service.spellForInput(new PhysicalInput(InputDevice.KEYSYM, 82)).orElseThrow());
+    }
+
+    @Test
     void notifiesOnlyWhenResolvedProfileIdChanges() {
         List<String> notifications = new ArrayList<>();
         SpellProfileService service = new SpellProfileService(

@@ -1,6 +1,6 @@
 # Sylly Addons
 
-Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.8.
+Personal-use Fabric companion mod for Minecraft 1.21.11 and Wynntils 4.2.9.
 
 The current implementation includes the Track 1 observation pipeline, Track 2 per-character spell profiles, the Track
 3 configuration shell, the synthetic portion of Track 4's routing/economy truth engine, Track 5 portable snapshots
@@ -17,7 +17,7 @@ Requirements:
 - Minecraft 1.21.11;
 - Fabric Loader 0.19.3;
 - Fabric API 0.141.5+1.21.11;
-- the exact supported Wynntils 4.2.8 Fabric JAR listed in [COMPATIBILITY.md](COMPATIBILITY.md).
+- the exact supported Wynntils 4.2.9 Fabric JAR listed in [COMPATIBILITY.md](COMPATIBILITY.md).
 
 Configure the local Wynntils path:
 
@@ -75,7 +75,9 @@ then the current profile. Profiles are stored atomically at `config/syllyaddons/
 During normal gameplay a configured physical input is claimed before native key mappings, preventing a matching
 Wynntils binding from casting a second spell. Input is never claimed while chat, a menu, the profile manager, or the
 controls screen is open. Wynntils Quick Cast must remain enabled because its own weapon checks, class click direction,
-delays, cooldown, and adaptive lag correction are deliberately reused.
+delays, cooldown, and adaptive lag correction are deliberately reused. Leaving a Wynncraft world clears the active
+session; entering another world explicitly recaptures the current character so the same class/profile bindings are
+restored even when Wynntils emits no character-change event.
 
 ## Track 3 settings
 
@@ -94,7 +96,7 @@ exact pre-migration file as `.schema-v<old>-to-v<new>-<timestamp>.bak` before wr
 Track 4 now has an immutable ordered territory graph, explicit topology diagnostics, Fastest and Cheapest candidate
 routes, tax and delivery-time accounting, same-owner reachability checks, and per-resource provenance through HQ
 expenses and storage. The engine is pure Java and covered by synthetic fixtures plus a small topology observation from
-Wynntils 4.2.8.
+Wynntils 4.2.9.
 
 The proposed server algorithm and economy semantics are still research assumptions. Results carry a rule version,
 confidence, and diagnostics and cannot be labelled exact under the default rules. See
@@ -122,7 +124,7 @@ formula, numeric inputs, affected territories, evidence age/source, known missin
 Findings with the same root cause are merged rather than repeated. Routed provenance can be highlighted on the
 Wynntils guild map.
 
-The passive territory-menu scan now supplies exact Wynntils 4.2.8 upgrade levels and version-pinned hourly costs.
+The passive territory-menu scan now supplies exact Wynntils 4.2.9 upgrade levels and version-pinned hourly costs.
 Expense-dependent checks are withheld until all owned territory upgrade lists are known. Tax, server spending order,
 cross-resource value, and upgrade strategic value remain explicit assumptions. Warning/critical findings produce one
 cooldown-controlled chat summary when the Eco Auditor setting is enabled. See
@@ -229,6 +231,6 @@ guild configuration. Container and advancement handlers consume post-observation
   owned territory's production and upgrade levels plus HQ storage are observed.
 - Track 2 still needs repeated live character-switch and keyboard/mouse casting validation; the persistence and
   resolver paths are covered by automated tests.
-- The official territory endpoint is needed for fields that Wynntils 4.2.8 downloads but does not retain in its public
+- The official territory endpoint is needed for fields that Wynntils 4.2.9 downloads but does not retain in its public
   territory profile model.
 - The compatibility guard disables the addon if the Wynntils version or JAR checksum differs from the tested build.

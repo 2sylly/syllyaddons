@@ -1,2 +1,2 @@
 # Point this at the exact supported Wynntils Fabric JAR.
-wynntils.jar=/absolute/path/to/wynntils-4.2.8-fabric+MC-1.21.11.jar
+wynntils.jar=/absolute/path/to/wynntils-4.2.9-fabric+MC-1.21.11.jar

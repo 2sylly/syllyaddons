@@ -128,12 +128,12 @@ public final class ObservedEconomyAnalyzer {
         if (unknownUpgradeKeys > 0) {
             diagnostics.add(new RouteDiagnostic(
                     "UNKNOWN_UPGRADE_KEYS",
-                    unknownUpgradeKeys + " observed upgrade key(s) are absent from the Wynntils 4.2.8 catalog"));
+                    unknownUpgradeKeys + " observed upgrade key(s) are absent from the Wynntils 4.2.9 catalog"));
         }
         if (invalidUpgradeLevels > 0) {
             diagnostics.add(new RouteDiagnostic(
                     "INVALID_UPGRADE_LEVELS",
-                    invalidUpgradeLevels + " observed upgrade level(s) are outside the Wynntils 4.2.8 catalog"));
+                    invalidUpgradeLevels + " observed upgrade level(s) are outside the Wynntils 4.2.9 catalog"));
         }
         diagnostics.add(new RouteDiagnostic(
                 "ASSUMED_FOREIGN_TAX",

@@ -6,9 +6,9 @@ guild command, or modifies territory configuration.
 ## Input boundary
 
 - Upgrade names, levels, hourly costs, storage bonuses, and production multipliers are pinned to the supported
-  [Wynntils 4.2.8 `TerritoryUpgrade`](https://github.com/Wynntils/Wynntils/blob/c7866971a8ae11c2a86a3980dd41f173d41f62a8/common/src/main/java/com/wynntils/models/territories/type/TerritoryUpgrade.java)
-  and [`TerritoryItem`](https://github.com/Wynntils/Wynntils/blob/c7866971a8ae11c2a86a3980dd41f173d41f62a8/common/src/main/java/com/wynntils/models/items/items/gui/TerritoryItem.java)
-  source. The catalog version is `wynntils-4.2.8-territory-upgrades`.
+  [Wynntils 4.2.9 `TerritoryUpgrade`](https://github.com/Wynntils/Wynntils/blob/9a3562a40feb7574fca1a8045cefc43b62c66007/common/src/main/java/com/wynntils/models/territories/type/TerritoryUpgrade.java)
+  and [`TerritoryItem`](https://github.com/Wynntils/Wynntils/blob/9a3562a40feb7574fca1a8045cefc43b62c66007/common/src/main/java/com/wynntils/models/items/items/gui/TerritoryItem.java)
+  source. The catalog version is `wynntils-4.2.9-territory-upgrades`. These two source files are unchanged from 4.2.8.
 - Upgrade expense checks run only when every owned territory has a locally observed upgrade list and every upgrade key
   exists in that catalog.
 - Foreign tax remains an estimate when the game does not expose an explicit edge tax schedule. The default analyzer

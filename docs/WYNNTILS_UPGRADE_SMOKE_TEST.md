@@ -58,5 +58,16 @@ versions with the result.
 ## Current pin
 
 - Minecraft: **1.21.11**
-- Wynntils: **4.2.8**
-- Wynntils SHA-256: `00369b5950a9522b8feed3122a4ec15dd581347c8fa868670650b76bac1380f6`
+- Wynntils: **4.2.9**
+- Wynntils SHA-256: `faf32c32c5ce3af3b7236a19c5b8b8c6fb44695bf4340a9083bd2eae744858ef`
+
+## 4.2.8 → 4.2.9 audit record
+
+- Official release: `v4.2.9`, published 2026-08-29.
+- Tag commit: `9a3562a40feb7574fca1a8045cefc43b62c66007`.
+- Published Fabric artifact SHA-256 matched the downloaded JAR.
+- Every directly imported Wynntils class retained the same public API.
+- `AbstractMapScreen` retained every private field used by the optional accessor.
+- `QuickCastFeature`, `TerritoryUpgrade`, `TerritoryItem`, and `AbstractMapScreen` source files were unchanged.
+- Automated unit, performance, and build checks passed after repinning.
+- In-game items above remain manual and must be exercised on the next launch.

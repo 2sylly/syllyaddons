@@ -1,4 +1,4 @@
-package net.syllyaddons.compat.wynntils.v4_2_8;
+package net.syllyaddons.compat.wynntils.v4_2_9;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.wynntils.core.components.Models;

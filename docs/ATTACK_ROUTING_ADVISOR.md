@@ -5,7 +5,7 @@ click an item, send a command or packet, change HQ routing, spend emeralds, or q
 
 ## Passive inputs
 
-The exact supported Wynntils 4.2.8 source already recognizes container titles shaped as
+The exact supported Wynntils 4.2.9 source already recognizes container titles shaped as
 `Attacking: <territory>`. Sylly Addons listens only to Wynntils' post-content and post-slot events, confirms that title,
 and reads the visible item names/tooltips. The parser accepts emeralds, Emerald Blocks, Liquid Emeralds, minute/second
 durations, clock durations, and an explicitly labelled route/path. Missing text remains missing.
@@ -65,5 +65,5 @@ The recommendation is unavailable if any of these are missing or inconsistent:
 
 Source-level safety checks cover the Track 9 packages for click, command, and packet APIs. The only integration methods
 consume post-observation container events, a post-queue timer event, and world-state changes. Live acceptance still
-requires several manual attack-menu comparisons on the pinned Wynntils 4.2.8 build; a disagreement must keep advice
+requires several manual attack-menu comparisons on the pinned Wynntils 4.2.9 build; a disagreement must keep advice
 unavailable and produce a new rule/parser revision rather than being silently accepted.

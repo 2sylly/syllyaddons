@@ -54,7 +54,7 @@ final class SnapshotTestFixtures {
                         createdAt,
                         Map.of(
                                 "minecraft", "1.21.11",
-                                "wynntils", "4.2.8",
+                                "wynntils", "4.2.9",
                                 "syllyaddons", "0.1.0-dev"));
     }
 

@@ -1,4 +1,4 @@
-package net.syllyaddons.compat.wynntils.v4_2_8;
+package net.syllyaddons.compat.wynntils.v4_2_9;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.wynntils.core.components.Managers;
@@ -40,7 +40,7 @@ public final class WynntilsSpellAdapter implements SpellCastGateway, NativeSpell
             tryCastSpell = QuickCastFeature.class.getDeclaredMethod("tryCastSpell", List.class, boolean.class);
             tryCastSpell.setAccessible(true);
         } catch (ReflectiveOperationException exception) {
-            throw new IllegalStateException("Wynntils 4.2.8 Quick Cast bridge is unavailable", exception);
+            throw new IllegalStateException("Wynntils 4.2.9 Quick Cast bridge is unavailable", exception);
         }
     }
 

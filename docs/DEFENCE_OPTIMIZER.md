@@ -10,7 +10,7 @@ territory, exact observed upgrade levels for every owned territory, and HQ stora
 invalid level makes the model unavailable because silently assigning it zero upkeep would create a false saving.
 
 The no-change current assignment is calculated first and retained as the baseline even when it violates a requested
-constraint. Only these version-pinned, quantified effects from Wynntils 4.2.8 may become downgrade variables:
+constraint. Only these version-pinned, quantified effects from Wynntils 4.2.9 may become downgrade variables:
 
 - `EFFICIENT_RESOURCES` and `RESOURCE_RATE` on each owned territory;
 - `EFFICIENT_EMERALDS` and `EMERALD_RATE` on each owned territory;

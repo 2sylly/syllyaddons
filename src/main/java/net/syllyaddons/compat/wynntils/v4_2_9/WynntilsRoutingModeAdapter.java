@@ -1,4 +1,4 @@
-package net.syllyaddons.compat.wynntils.v4_2_8;
+package net.syllyaddons.compat.wynntils.v4_2_9;
 
 import com.wynntils.core.text.StyledText;
 import com.wynntils.utils.mc.LoreUtils;

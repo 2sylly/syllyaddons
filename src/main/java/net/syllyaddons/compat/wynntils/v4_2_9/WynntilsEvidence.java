@@ -1,10 +1,10 @@
-package net.syllyaddons.compat.wynntils.v4_2_8;
+package net.syllyaddons.compat.wynntils.v4_2_9;
 
 import net.syllyaddons.domain.Evidence;
 import net.syllyaddons.domain.EvidenceKind;
 
 final class WynntilsEvidence {
-    static final String VERSION = "4.2.8";
+    static final String VERSION = "4.2.9";
 
     private WynntilsEvidence() {}
 

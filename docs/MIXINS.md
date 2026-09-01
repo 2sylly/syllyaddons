@@ -5,11 +5,11 @@ this document, the pinned compatibility checks, and the Wynntils upgrade smoke t
 
 ## `AbstractMapScreenAccessor`
 
-- **Target:** `com.wynntils.screens.maps.AbstractMapScreen` in Wynntils 4.2.8.
+- **Target:** `com.wynntils.screens.maps.AbstractMapScreen` in Wynntils 4.2.9.
 - **Type:** accessor only; it does not inject, overwrite, redirect, or change execution.
 - **Fields read:** `mapCenterX`, `mapCenterZ`, `centerX`, `centerZ`, `zoomRenderScale`, `renderX`, `renderY`,
   `renderWidth`, and `renderHeight`.
-- **Reason:** Wynntils 4.2.8 does not expose the world-to-screen transform or rendered viewport required to align a
+- **Reason:** Wynntils 4.2.9 does not expose the world-to-screen transform or rendered viewport required to align a
   read-only route/impact layer with its guild map.
 - **Consumers:** `RouteHighlightController` and `TerritoryImpactOverlayController`.
 - **Failure behavior:** the mixin is optional. Both consumers check that the accessor was applied before registering

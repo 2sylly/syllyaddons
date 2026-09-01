@@ -1,4 +1,4 @@
-package net.syllyaddons.compat.wynntils.v4_2_8;
+package net.syllyaddons.compat.wynntils.v4_2_9;
 
 import com.wynntils.core.components.Models;
 import com.wynntils.mc.event.AdvancementUpdateEvent;
@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 
 public final class WynntilsObservationListener {
     private static final int API_REFRESH_TICKS = 20 * 15;
+    private static final int SESSION_RECAPTURE_TICKS = 20;
 
     private final ObservedStateRepository repository;
     private final WynntilsSessionAdapter sessionAdapter;
@@ -29,6 +30,7 @@ public final class WynntilsObservationListener {
     private final Logger logger;
     private final AtomicBoolean apiRequestInFlight = new AtomicBoolean();
     private int ticksUntilApiRefresh;
+    private int sessionRecaptureTicks;
     private String lastApiError = "";
 
     public WynntilsObservationListener(
@@ -72,10 +74,20 @@ public final class WynntilsObservationListener {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onWorldStateChanged(WorldStateEvent event) {
-        if (event.getOldState() == WorldState.WORLD && event.getNewState() != WorldState.WORLD) {
+        WorldTransitionPlan transition = WorldTransitionPlan.between(
+                event.getOldState() == WorldState.WORLD,
+                event.getNewState() == WorldState.WORLD);
+        if (transition.clearSession()) {
             repository.clearSession(System.currentTimeMillis(), "The Wynncraft world session ended");
         }
-        if (event.getNewState() == WorldState.WORLD) {
+        if (transition.recaptureSession()) {
+            // Wynntils may retain the same CharacterModel across a world hop and emit no CharacterUpdateEvent.
+            // Recapturing here restores the profile cleared on exit without requiring the class to change.
+            sessionRecaptureTicks = SESSION_RECAPTURE_TICKS;
+            captureSession();
+            stopSessionRetryWhenKnown();
+        }
+        if (transition.refreshTerritories()) {
             ticksUntilApiRefresh = 0;
             captureProfiles();
             captureAdvancementTerritories();
@@ -100,6 +112,11 @@ public final class WynntilsObservationListener {
     @SubscribeEvent
     public void onTick(TickEvent event) {
         if (!Models.WorldState.onWorld()) return;
+        if (sessionRecaptureTicks > 0) {
+            sessionRecaptureTicks--;
+            captureSession();
+            stopSessionRetryWhenKnown();
+        }
         if (ticksUntilApiRefresh-- <= 0) {
             ticksUntilApiRefresh = API_REFRESH_TICKS;
             captureProfiles();
@@ -109,6 +126,10 @@ public final class WynntilsObservationListener {
 
     private void captureSession() {
         safeCapture("session", () -> repository.merge(sessionAdapter.capture(System.currentTimeMillis())));
+    }
+
+    private void stopSessionRetryWhenKnown() {
+        if (repository.snapshot().character().isKnown()) sessionRecaptureTicks = 0;
     }
 
     private void captureProfiles() {

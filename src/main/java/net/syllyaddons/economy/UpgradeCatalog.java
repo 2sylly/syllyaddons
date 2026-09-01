@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Optional;
 import net.syllyaddons.domain.ResourceType;
 
-/** Exact data copied from Wynntils 4.2.8 TerritoryUpgrade and TerritoryItem. */
+/** Exact data verified against Wynntils 4.2.9 TerritoryUpgrade and TerritoryItem. */
 public final class UpgradeCatalog {
-    public static final String VERSION = "wynntils-4.2.8-territory-upgrades";
+    public static final String VERSION = "wynntils-4.2.9-territory-upgrades";
     public static final String SOURCE =
-            "Wynntils v4.2.8 TerritoryUpgrade.java and TerritoryItem.java (tag commit c7866971)";
+            "Wynntils v4.2.9 TerritoryUpgrade.java and TerritoryItem.java (tag commit 9a3562a4)";
 
     private static final Map<String, UpgradeDefinition> DEFINITIONS = definitions();
 

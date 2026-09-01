@@ -463,7 +463,7 @@ public final class SyllySettingsScreen extends Screen {
                 "debug bundle data status provenance health diagnostics observations operations redacted");
         addUnavailableRow(
                 "Wynntils compatibility guard",
-                "Exact support is locked to Wynntils 4.2.8 for Minecraft 1.21.11.");
+                "Exact support is locked to Wynntils 4.2.9 for Minecraft 1.21.11.");
     }
 
     private void addBooleanRow(

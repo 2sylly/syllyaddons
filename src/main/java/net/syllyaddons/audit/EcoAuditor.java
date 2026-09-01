@@ -467,7 +467,7 @@ public final class EcoAuditor {
                             List.of(territory.name()),
                             List.of(
                                     calculation("Targeted production", "sum of targeted observed production", Map.of("production", currentValue), currentValue, "/h"),
-                                    calculation("Current upkeep", "Wynntils 4.2.8 level cost", Map.of("level", (double) level), definition.costAt(level), " " + pretty(definition.upkeepResource()) + "/h")),
+                                    calculation("Current upkeep", "Wynntils 4.2.9 level cost", Map.of("level", (double) level), definition.costAt(level), " " + pretty(definition.upkeepResource()) + "/h")),
                             List.of("Upgrade catalog: " + UpgradeCatalog.VERSION),
                             valuationMissing,
                             provenanceForTerritory(economy, territory.name())));
