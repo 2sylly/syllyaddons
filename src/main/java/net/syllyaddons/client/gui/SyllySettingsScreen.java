@@ -257,6 +257,14 @@ public final class SyllySettingsScreen extends Screen {
                                 current.routingAdvisor().withBlockAttackWhenFastestIsFaster(
                                         RoutingAdvisorConfig.defaults().blockAttackWhenFastestIsFaster())),
                         "block click faster queuing fastest cheapest confirmation attack hq");
+                addActionRow(
+                        "Click-block self-test",
+                        "For 60 seconds, cancel exactly one ordinary server-menu click and confirm it in chat.",
+                        "Arm next click",
+                        () -> status = AttackAdvisorOverlayController.armNextContainerClickTest()
+                                ? "Test armed. Open a server menu and click one harmless item."
+                                : "Test unavailable because the packet guard is not active.",
+                        "test packet click block guard one shot server menu diagnostics");
             }
             case OPTIMIZER -> {
                 SyllyConfig config = settings.snapshot();

@@ -181,6 +181,9 @@ proven quicker, a normal click on the actual Attack item is stopped by a confirm
 management; shift-left-click confirms the original Attack action. See
 [the advisor evidence and safety rules](docs/ATTACK_ROUTING_ADVISOR.md).
 
+The same section includes a one-shot **Click-block self-test**. Arming it cancels exactly the next outgoing server-menu
+click, reports success in chat, and then disarms. It expires after 60 seconds if unused.
+
 ## Track 10 defence-sustainability optimizer
 
 Open **Settings → Optimizer → Open optimizer** to run a bounded integer search over the currently observed economy.

@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 public final class AttackAdvisorOverlayController {
     private static final Logger LOGGER = LoggerFactory.getLogger("SyllyAddons/AttackGuard");
     private static final AttackButtonDetector ATTACK_BUTTON = new AttackButtonDetector();
+    private static final long TEST_CLICK_BLOCK_TIMEOUT_MILLIS = 60_000;
+    private static final OneShotClickGuard TEST_CLICK_GUARD =
+            new OneShotClickGuard(TEST_CLICK_BLOCK_TIMEOUT_MILLIS);
     private static Supplier<AttackAdvisorService> serviceSupplier;
     private static Supplier<SyllyConfigService> settingsSupplier;
     private static final WeakHashMap<Screen, ConfirmationState> CONFIRMATIONS = new WeakHashMap<>();
@@ -67,6 +70,21 @@ public final class AttackAdvisorOverlayController {
             ScreenMouseEvents.allowMouseClick(screen).register((ignored, event) ->
                     allowMouseClick(screen, event, confirmation));
         });
+    }
+
+    /** Arms a one-shot test that cancels the next outgoing container click packet. */
+    public static boolean armNextContainerClickTest() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.getConnection() == null
+                || !(client.getConnection().getConnection() instanceof AttackPacketGuardMarker)) {
+            notifyPlayer("[SyllyAddons] Click-block test unavailable: packet guard is not active.");
+            return false;
+        }
+        TEST_CLICK_GUARD.arm(System.currentTimeMillis());
+        LOGGER.info("Armed one-shot container click block test for {} seconds",
+                TEST_CLICK_BLOCK_TIMEOUT_MILLIS / 1_000);
+        notifyPlayer("[SyllyAddons] Test armed: the next container click will be blocked (60s).");
+        return true;
     }
 
     private static void render(Screen screen, GuiGraphics graphics, ConfirmationState confirmation) {
@@ -155,6 +173,12 @@ public final class AttackAdvisorOverlayController {
 
     /** Cancels the actual outgoing attack packet, including clicks sent directly by another mod. */
     public static boolean interceptContainerPacket(ServerboundContainerClickPacket packet) {
+        if (TEST_CLICK_GUARD.consume(System.currentTimeMillis())) {
+            LOGGER.info("Blocked outgoing container click packet for the one-shot self-test (container {}, slot {})",
+                    packet.containerId(), packet.slotNum());
+            notifyPlayer("[SyllyAddons] Test successful: container click blocked.");
+            return true;
+        }
         if (packetAuthorization != null && packetAuthorization.matches(packet)) {
             packetAuthorization = null;
             LOGGER.info("Allowed the explicitly confirmed attack click packet");
@@ -191,6 +215,15 @@ public final class AttackAdvisorOverlayController {
         LOGGER.info("Blocked outgoing attack click packet; Fastest saves {} seconds",
                 view.advice().timeSavedSeconds());
         return true;
+    }
+
+    private static void notifyPlayer(String message) {
+        Minecraft client = Minecraft.getInstance();
+        client.execute(() -> {
+            if (client.player != null) {
+                client.player.displayClientMessage(Component.literal(message), false);
+            }
+        });
     }
 
     private static boolean shouldGuard(AttackAdvisorView view) {
