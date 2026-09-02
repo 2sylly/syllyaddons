@@ -6,7 +6,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.OptionalInt;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,7 +13,6 @@ import java.util.regex.Pattern;
 /** Tolerant text parser for Wynncraft's passive {@code Attacking: <territory>} inventory. */
 public final class AttackMenuParser {
     private static final Pattern TITLE = Pattern.compile("(?i)^Attacking:\\s*(.+?)\\s*$");
-    private static final Pattern NUMBER = Pattern.compile("([0-9][0-9,]*)");
     private static final Pattern MINUTES = Pattern.compile("(?i)([0-9]+)\\s*(?:minutes?|mins?|m)(?![a-z])");
     private static final Pattern SECONDS = Pattern.compile("(?i)([0-9]+)\\s*(?:seconds?|secs?|s)(?![a-z])");
     private static final Pattern CLOCK = Pattern.compile("(?<![0-9])([0-9]+):([0-5][0-9])(?![0-9])");
@@ -36,20 +34,15 @@ public final class AttackMenuParser {
                 .toList();
         target = canonical(target, canonicalNames);
 
-        OptionalLong cost = OptionalLong.empty();
         OptionalInt timer = OptionalInt.empty();
         LinkedHashSet<String> route = new LinkedHashSet<>();
         for (AttackMenuEntry entry : entries == null ? List.<AttackMenuEntry>of() : entries) {
             List<String> lines = new ArrayList<>();
             lines.add(entry.displayName());
             lines.addAll(entry.lore());
-            boolean costContext = containsAny(entry.displayName(), "cost", "price", "emerald");
             boolean timerContext = containsAny(entry.displayName(), "timer", "time", "duration", "queue");
             boolean routeContext = containsAny(entry.displayName(), "route", "path");
             for (String line : lines) {
-                if (cost.isEmpty() && (costContext || containsAny(line, "cost", "price", "emerald", " eb", " le"))) {
-                    cost = parseCost(line);
-                }
                 if (timer.isEmpty() && (timerContext || containsAny(line, "timer", "time", "duration", "minute", " min"))) {
                     timer = parseTimer(line);
                 }
@@ -59,35 +52,14 @@ public final class AttackMenuParser {
                 }
             }
         }
-        if (cost.isEmpty()) diagnostics.add("Attack cost was not found in the displayed menu text.");
         if (timer.isEmpty()) diagnostics.add("Attack timer was not found in the displayed menu text.");
-        return new AttackMenuSnapshot(target, cost, timer, List.copyOf(route), observedAtEpochMillis, diagnostics);
+        return new AttackMenuSnapshot(target, timer, List.copyOf(route), observedAtEpochMillis, diagnostics);
     }
 
     private static String parseTarget(String title) {
         if (title == null) return "";
         Matcher matcher = TITLE.matcher(title.strip());
         return matcher.matches() ? matcher.group(1).strip() : "";
-    }
-
-    private static OptionalLong parseCost(String text) {
-        Matcher number = NUMBER.matcher(text);
-        if (!number.find()) return OptionalLong.empty();
-        long value;
-        try {
-            value = Long.parseLong(number.group(1).replace(",", ""));
-        } catch (NumberFormatException exception) {
-            return OptionalLong.empty();
-        }
-        String lower = text.toLowerCase(Locale.ROOT);
-        long multiplier = lower.contains("liquid emerald") || lower.matches(".*\\ble(?:s)?\\b.*")
-                ? 4_096L
-                : lower.contains("emerald block") || lower.matches(".*\\beb(?:s)?\\b.*") ? 64L : 1L;
-        try {
-            return OptionalLong.of(Math.multiplyExact(value, multiplier));
-        } catch (ArithmeticException exception) {
-            return OptionalLong.empty();
-        }
     }
 
     private static OptionalInt parseTimer(String text) {

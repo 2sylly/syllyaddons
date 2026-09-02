@@ -4,14 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.OptionalInt;
-import java.util.OptionalLong;
 import java.util.Set;
 import net.syllyaddons.domain.EcoSnapshot;
 import net.syllyaddons.domain.GuildIdentity;
 import net.syllyaddons.domain.ObservedState;
 import net.syllyaddons.domain.RoutingMode;
-import net.syllyaddons.domain.TerritoryOwner;
-import net.syllyaddons.domain.TerritoryState;
 import net.syllyaddons.routing.ObservedTerritoryGraphFactory;
 import net.syllyaddons.routing.OwnerTaxPolicy;
 import net.syllyaddons.routing.RouteEngine;
@@ -45,7 +42,7 @@ public final class AttackRoutingAdvisor {
                 menu.target(), "", diagnostics, "Guild headquarters is unknown.", false, nowEpochMillis);
         if (!menu.hasRequiredInputs()) return unavailable(
                 menu.target(), state.hqTerritory().value(), diagnostics,
-                "The displayed attack cost and timer are required.", false, nowEpochMillis);
+                "The displayed queue timer is required.", false, nowEpochMillis);
 
         String hq = state.hqTerritory().value();
         String target = canonicalTarget(menu.target(), state);
@@ -100,25 +97,16 @@ public final class AttackRoutingAdvisor {
                 ? displayedRouteResult
                 : observedMode == RoutingMode.CHEAPEST ? cheapestRoute : fastestRoute;
 
-        int ownedTerritories = (int) state.territories().values().stream()
-                .filter(territory -> ownedBy(territory, state.guild().value()))
-                .count();
         AttackRouteEstimate cheapest = estimate(
                 RoutingMode.CHEAPEST, observedMode == RoutingMode.CHEAPEST ? observedRoute : cheapestRoute,
-                state, ownedTerritories,
-                observedMode == RoutingMode.CHEAPEST ? menu.observedTimerSeconds() : OptionalInt.empty(),
-                observedMode == RoutingMode.CHEAPEST ? menu.observedCostEmeralds() : OptionalLong.empty());
+                observedMode == RoutingMode.CHEAPEST ? menu.observedTimerSeconds() : OptionalInt.empty());
         AttackRouteEstimate fastest = estimate(
                 RoutingMode.FASTEST, observedMode == RoutingMode.FASTEST ? observedRoute : fastestRoute,
-                state, ownedTerritories,
-                observedMode == RoutingMode.FASTEST ? menu.observedTimerSeconds() : OptionalInt.empty(),
-                observedMode == RoutingMode.FASTEST ? menu.observedCostEmeralds() : OptionalLong.empty());
+                observedMode == RoutingMode.FASTEST ? menu.observedTimerSeconds() : OptionalInt.empty());
 
         int timeSaved = Math.max(0, cheapest.comparisonTimerSeconds() - fastest.comparisonTimerSeconds());
-        long additionalCost = fastest.comparisonCostEmeralds() - cheapest.comparisonCostEmeralds();
         AttackAdviceDecision decision = decide(timeSaved);
-        diagnostics.add("Unobserved route costs use a 70% foreign-tax research estimate.");
-        diagnostics.add("The current mode's cost and timer come from the displayed attack menu.");
+        diagnostics.add("The current mode's queue time comes from the displayed attack menu.");
         if (observedMode == RoutingMode.CHEAPEST
                 && Math.abs(displayedTimer - attackTimerSeconds(cheapestRoute)) > TIMER_TOLERANCE_SECONDS) {
             diagnostics.add("Displayed Cheapest timing replaced the fallback-tax A* estimate.");
@@ -128,24 +116,19 @@ public final class AttackRoutingAdvisor {
                     + " from a unique attack timer/route match.");
         }
         return new AttackRoutingAdvice(
-                target, hq, cheapest, fastest, timeSaved, additionalCost, decision,
+                target, hq, cheapest, fastest, timeSaved, decision,
                 observedMode, resolution.inferred(), false, diagnostics, nowEpochMillis);
     }
 
     private static AttackRouteEstimate estimate(
             RoutingMode mode,
             RouteResult route,
-            ObservedState state,
-            int ownedTerritories,
-            OptionalInt observedTimer,
-            OptionalLong observedCost) {
+            OptionalInt observedTimer) {
         return new AttackRouteEstimate(
                 mode,
                 route,
                 attackTimerSeconds(route),
-                estimatedAttackCost(route.path(), state, ownedTerritories),
-                observedTimer,
-                observedCost);
+                observedTimer);
     }
 
     private static RouteResult observedRoute(
@@ -185,27 +168,6 @@ public final class AttackRoutingAdvisor {
         return Math.multiplyExact(route.steps().size() + 1, 60);
     }
 
-    static long estimatedAttackCost(List<String> path, ObservedState state, int ownedTerritories) {
-        long base = switch (ownedTerritories) {
-            case 0 -> 0;
-            case 1 -> 200;
-            case 2 -> 800;
-            case 3 -> 2_000;
-            default -> 4_000;
-        };
-        if (base == 0 || path.size() < 3) return base;
-        double multiplier = 1.0;
-        GuildIdentity guild = state.guild().value();
-        // HQ and the target are exempt. Only intermediate foreign territories add estimated tax.
-        for (int index = 1; index < path.size() - 1; index++) {
-            TerritoryState territory = state.territories().get(path.get(index));
-            if (territory != null && !ownedBy(territory, guild)) {
-                multiplier *= 1.0 + ObservedEconomyAnalyzer.ASSUMED_FOREIGN_TAX_RATE;
-            }
-        }
-        return (long) Math.ceil(base * multiplier);
-    }
-
     static AttackAdviceDecision decide(int timeSaved) {
         return timeSaved > 0 ? AttackAdviceDecision.FASTEST_FASTER : AttackAdviceDecision.SAME_QUEUE_TIME;
     }
@@ -219,7 +181,7 @@ public final class AttackRoutingAdvisor {
             long nowEpochMillis) {
         diagnostics.add(reason);
         return new AttackRoutingAdvice(
-                target, hq, null, null, 0, 0, AttackAdviceDecision.UNAVAILABLE,
+                target, hq, null, null, 0, AttackAdviceDecision.UNAVAILABLE,
                 null, false, routingObservationNeeded, diagnostics, nowEpochMillis);
     }
 
@@ -308,13 +270,6 @@ public final class AttackRoutingAdvisor {
         if (!guild.uuid().isBlank()) ids.add(guild.uuid());
         if (!guild.name().isBlank()) ids.add(guild.name());
         return ids;
-    }
-
-    private static boolean ownedBy(TerritoryState territory, GuildIdentity guild) {
-        if (!territory.owner().isKnown()) return false;
-        TerritoryOwner owner = territory.owner().value();
-        return (!guild.uuid().isBlank() && guild.uuid().equals(owner.guildUuid()))
-                || (!guild.name().isBlank() && guild.name().equals(owner.guildName()));
     }
 
     private record ModeResolution(RoutingMode mode, boolean inferred, boolean needsObservation, String reason) {}

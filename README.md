@@ -169,9 +169,8 @@ an exact loss timestamp. Character/world or guild boundaries clear queued alerts
 ## Track 9 attack-routing advisor
 
 Open a normal Wynncraft `Attacking: <territory>` menu to compare Cheapest and Fastest. The panel exists only while that
-attack screen is open. It shows each route's timer, emerald cost, hop count, Fastest's time saving and additional cost;
-any positive time saving recommends Fastest. The current mode's cost and timer come from the displayed Attack item, and
-the other mode's cost uses the versioned Track 4 route plus the labelled 70% foreign-tax research fallback.
+attack screen is open. It shows each route's timer and hop count plus Fastest's time saving; any positive time saving
+recommends Fastest. Attack prices are neither parsed nor estimated and do not affect the recommendation.
 
 If HQ routing was not captured from territory management, a timer/path that uniquely identifies one mode is recorded
 as derived evidence. A displayed queue longer than the local shortest path identifies Cheapest even when live taxes
@@ -242,8 +241,7 @@ selects a routing mode or attacks in response to an event or timer.
   production, tower supply, and strategic intent remain unavailable and cannot appear as exact.
 - Track 8 map colours and alerts are snapshots of the most recent completed cache. A loss can occur anywhere inside
   the displayed observation window; if the exact pre-loss cache entry is missing, no alert is shown.
-- Track 9 requires the live Attack item to expose a parseable cost and timer. The alternate route cost remains an
-  estimate until diplomacy/tax values and server route parity have live golden captures. A displayed Cheapest route is
+- Track 9 requires the live Attack item to expose a parseable timer. A displayed Cheapest route is
   authoritative for the current attack; internally inconsistent or shorter-than-local-fastest evidence disables both
   the recommendation and click guard instead of guessing.
 - Track 10 compares raw resource units without cross-resource market weights. Its one-hour projection inherits Track

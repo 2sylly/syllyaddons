@@ -9,7 +9,6 @@ public record AttackRoutingAdvice(
         AttackRouteEstimate cheapest,
         AttackRouteEstimate fastest,
         int timeSavedSeconds,
-        long additionalCostEmeralds,
         AttackAdviceDecision decision,
         RoutingMode resolvedRoutingMode,
         boolean routingModeInferred,

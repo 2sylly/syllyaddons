@@ -213,10 +213,7 @@ public final class AttackAdvisorOverlayController {
         if (advice.available()) {
             lines.add(new Line(estimate("Fastest", advice.fastest()), 0xFFE2E8F3));
             lines.add(new Line(estimate("Cheapest", advice.cheapest()), 0xFFE2E8F3));
-            String cost = advice.additionalCostEmeralds() >= 0
-                    ? "+" + advice.additionalCostEmeralds() + " emeralds"
-                    : advice.additionalCostEmeralds() + " emeralds";
-            lines.add(new Line("Fastest saves " + duration(advice.timeSavedSeconds()) + " · " + cost, 0xFFB9C8DF));
+            lines.add(new Line("Fastest saves " + duration(advice.timeSavedSeconds()), 0xFFB9C8DF));
             String modeSource = advice.routingModeInferred() ? "inferred from displayed timer/route" : "observed";
             lines.add(new Line("Current mode = " + displayMode(advice) + " (" + modeSource + ")", 0xFF7F8BA3));
         } else if (!advice.diagnostics().isEmpty()) {
@@ -265,9 +262,8 @@ public final class AttackAdvisorOverlayController {
 
     private static String estimate(String label, AttackRouteEstimate estimate) {
         String timer = duration(estimate.comparisonTimerSeconds());
-        String cost = Long.toString(estimate.comparisonCostEmeralds());
-        String observed = estimate.observedCostEmeralds().isPresent() ? "observed" : "estimated";
-        return label + ": " + timer + " · " + cost + " emeralds · " + observed
+        String observed = estimate.observedTimerSeconds().isPresent() ? "observed" : "estimated";
+        return label + ": " + timer + " · " + observed
                 + " · " + estimate.route().steps().size() + " hops";
     }
 

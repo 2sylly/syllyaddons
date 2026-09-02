@@ -12,7 +12,7 @@ class AttackMenuParserTest {
     private final AttackMenuParser parser = new AttackMenuParser();
 
     @Test
-    void parsesTargetCostTimerAndOrderedRouteWithoutClickingAnything() {
+    void parsesTargetTimerAndOrderedRouteWithoutClickingAnything() {
         AttackMenuSnapshot snapshot = parser.parse(
                 "Attacking: Goal",
                 List.of(
@@ -23,14 +23,13 @@ class AttackMenuParserTest {
                 1_000);
 
         assertEquals("Goal", snapshot.target());
-        assertEquals(128, snapshot.observedCostEmeralds().orElseThrow());
         assertEquals(150, snapshot.observedTimerSeconds().orElseThrow());
         assertEquals(List.of("HQ", "Middle", "Goal"), snapshot.observedRoute());
         assertTrue(snapshot.hasRequiredInputs());
     }
 
     @Test
-    void supportsClockTimersAndLiquidEmeralds() {
+    void supportsClockTimers() {
         AttackMenuSnapshot snapshot = parser.parse(
                 "Attacking: goal",
                 List.of(
@@ -40,7 +39,6 @@ class AttackMenuParserTest {
                 1_000);
 
         assertEquals("Goal", snapshot.target());
-        assertEquals(12_288, snapshot.observedCostEmeralds().orElseThrow());
         assertEquals(187, snapshot.observedTimerSeconds().orElseThrow());
     }
 
@@ -51,7 +49,7 @@ class AttackMenuParserTest {
                 Set.of("Goal"), 1_000);
 
         assertFalse(snapshot.hasRequiredInputs());
-        assertEquals(2, snapshot.diagnostics().size());
+        assertEquals(1, snapshot.diagnostics().size());
     }
 
     @Test
@@ -84,7 +82,6 @@ class AttackMenuParserTest {
                 Set.of("Unicorn Trail", "Waterfall Cave", "Illuminant Path"),
                 1_000);
 
-        assertEquals(62_616, snapshot.observedCostEmeralds().orElseThrow());
         assertEquals(1_200, snapshot.observedTimerSeconds().orElseThrow());
         assertEquals(List.of("Unicorn Trail", "Waterfall Cave", "Illuminant Path"), snapshot.observedRoute());
     }

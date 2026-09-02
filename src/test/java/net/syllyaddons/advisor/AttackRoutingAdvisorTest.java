@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
-import java.util.OptionalLong;
 import java.nio.file.Path;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.config.SyllyConfigStore;
@@ -38,7 +37,7 @@ class AttackRoutingAdvisorTest {
     @Test
     void comparesObservedCheapestAgainstEstimatedFastest() {
         ObservedState state = splitState(RoutingMode.CHEAPEST);
-        AttackMenuSnapshot menu = menu(4_000, 300);
+        AttackMenuSnapshot menu = menu(300);
 
         AttackRoutingAdvice advice = advisor.advise(state, menu, 2_000);
 
@@ -47,13 +46,10 @@ class AttackRoutingAdvisorTest {
         assertEquals(List.of("HQ", "F1", "F2", "Goal"), advice.fastest().route().path());
         assertEquals(300, advice.cheapest().comparisonTimerSeconds());
         assertEquals(240, advice.fastest().comparisonTimerSeconds());
-        assertEquals(4_000, advice.cheapest().comparisonCostEmeralds());
-        assertEquals(11_560, advice.fastest().comparisonCostEmeralds());
         assertEquals(60, advice.timeSavedSeconds());
-        assertEquals(7_560, advice.additionalCostEmeralds());
         assertEquals(AttackAdviceDecision.FASTEST_FASTER, advice.decision());
-        assertTrue(advice.cheapest().observedCostEmeralds().isPresent());
-        assertTrue(advice.fastest().observedCostEmeralds().isEmpty());
+        assertTrue(advice.cheapest().observedTimerSeconds().isPresent());
+        assertTrue(advice.fastest().observedTimerSeconds().isEmpty());
     }
 
     @Test
@@ -65,7 +61,7 @@ class AttackRoutingAdvisorTest {
     @Test
     void timerMismatchMakesRecommendationUnavailable() {
         AttackRoutingAdvice advice = advisor.advise(
-                splitState(RoutingMode.CHEAPEST), menu(4_000, 120), 2_000);
+                splitState(RoutingMode.CHEAPEST), menu(120), 2_000);
 
         assertFalse(advice.available());
         assertEquals(AttackAdviceDecision.UNAVAILABLE, advice.decision());
@@ -75,7 +71,7 @@ class AttackRoutingAdvisorTest {
     @Test
     void completeDisplayedRouteMismatchMakesRecommendationUnavailable() {
         AttackMenuSnapshot mismatched = new AttackMenuSnapshot(
-                "Goal", OptionalLong.of(4_000), OptionalInt.of(300),
+                "Goal", OptionalInt.of(300),
                 List.of("HQ", "F1", "F2", "Goal"), 1_000, List.of());
 
         AttackRoutingAdvice advice = advisor.advise(
@@ -86,9 +82,9 @@ class AttackRoutingAdvisorTest {
     }
 
     @Test
-    void missingDisplayedCostIsUnavailable() {
+    void missingDisplayedTimerIsUnavailable() {
         AttackMenuSnapshot incomplete = new AttackMenuSnapshot(
-                "Goal", OptionalLong.empty(), OptionalInt.of(300), List.of(), 1_000, List.of());
+                "Goal", OptionalInt.empty(), List.of(), 1_000, List.of());
 
         AttackRoutingAdvice advice = advisor.advise(
                 splitState(RoutingMode.CHEAPEST), incomplete, 2_000);
@@ -98,16 +94,8 @@ class AttackRoutingAdvisorTest {
     }
 
     @Test
-    void targetAndHeadquartersAreExemptFromEstimatedTax() {
-        ObservedState state = splitState(RoutingMode.CHEAPEST);
-
-        assertEquals(4_000, AttackRoutingAdvisor.estimatedAttackCost(List.of("HQ", "Goal"), state, 4));
-        assertEquals(6_800, AttackRoutingAdvisor.estimatedAttackCost(List.of("HQ", "F1", "Goal"), state, 4));
-    }
-
-    @Test
     void unknownModeIsInferredOnlyWhenTheTimerMatchesOneCandidate() {
-        AttackRoutingAdvice advice = advisor.advise(splitState(null), menu(4_000, 240), 2_000);
+        AttackRoutingAdvice advice = advisor.advise(splitState(null), menu(240), 2_000);
 
         assertTrue(advice.available());
         assertEquals(RoutingMode.FASTEST, advice.resolvedRoutingMode());
@@ -120,7 +108,6 @@ class AttackRoutingAdvisorTest {
     void aQueueLongerThanFastestIdentifiesCheapestDespiteFallbackRouteMismatch() {
         AttackMenuSnapshot displayed = new AttackMenuSnapshot(
                 "Goal",
-                OptionalLong.of(62_616),
                 OptionalInt.of(360),
                 List.of("HQ", "F1", "F2", "O1", "O2", "Goal"),
                 1_000,
@@ -138,7 +125,7 @@ class AttackRoutingAdvisorTest {
 
     @Test
     void ambiguousTimerPromptsForHqManagementInsteadOfGuessing() {
-        AttackRoutingAdvice advice = advisor.advise(singleRouteState(), menu(4_000, 180), 2_000);
+        AttackRoutingAdvice advice = advisor.advise(singleRouteState(), menu(180), 2_000);
 
         assertFalse(advice.available());
         assertTrue(advice.routingObservationNeeded());
@@ -180,16 +167,16 @@ class AttackRoutingAdvisorTest {
                 ObservedValue.known(RoutingMode.FASTEST, derived),
                 initial.territories());
 
-        AttackRoutingAdvice advice = advisor.advise(previouslyFastest, menu(4_000, 300), 2_000);
+        AttackRoutingAdvice advice = advisor.advise(previouslyFastest, menu(300), 2_000);
 
         assertTrue(advice.available());
         assertEquals(RoutingMode.CHEAPEST, advice.resolvedRoutingMode());
         assertTrue(advice.routingModeInferred());
     }
 
-    private static AttackMenuSnapshot menu(long cost, int timer) {
+    private static AttackMenuSnapshot menu(int timer) {
         return new AttackMenuSnapshot(
-                "Goal", OptionalLong.of(cost), OptionalInt.of(timer), List.of(), 1_000, List.of());
+                "Goal", OptionalInt.of(timer), List.of(), 1_000, List.of());
     }
 
     private static ObservedState splitState(RoutingMode mode) {

@@ -12,16 +12,14 @@ public final class AttackButtonDetector {
                 || name.startsWith("attack territory");
         if (!attackName) return false;
 
-        boolean hasPrice = false;
         boolean hasQueueTime = false;
         boolean hasClickCue = false;
         for (String lore : entry.lore()) {
             String line = normalize(lore);
-            hasPrice |= line.contains("price") || line.contains("cost") || line.contains("emerald");
             hasQueueTime |= line.contains("time to start") || line.contains("queue time") || line.contains("timer");
             hasClickCue |= line.contains("click") && (line.contains("attack") || line.contains("queue"));
         }
-        return (hasPrice && hasQueueTime) || hasClickCue;
+        return hasQueueTime || hasClickCue;
     }
 
     private static String normalize(String value) {

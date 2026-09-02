@@ -13,7 +13,7 @@ class AttackButtonDetectorTest {
     void recognizesTheLiveAttackItemWithoutDependingOnItsSlot() {
         assertTrue(detector.matches(new AttackMenuEntry(
                 "Attack with your Guild's emeralds",
-                List.of("Price: ✖ 62616", "Time to Start: 20m"))));
+                List.of("Time to Start: 20m"))));
     }
 
     @Test

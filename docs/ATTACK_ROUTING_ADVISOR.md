@@ -8,12 +8,12 @@ world event, or recommendation.
 
 The exact supported Wynntils 4.2.9 source recognizes container titles shaped as `Attacking: <territory>`. SyllyAddons
 listens to Wynntils' post-content and post-slot events, confirms that title, and reads visible item names/tooltips. The
-parser accepts emeralds, Emerald Blocks, Liquid Emeralds, minute/second durations, clock durations, and the route glyphs
-used by the live Attack item. Missing text remains missing.
+parser accepts minute/second durations, clock durations, and the route glyphs used by the live Attack item. Price text
+is deliberately ignored. Missing text remains missing.
 
 The [official Wynncraft Wiki's guild-war documentation](https://wynncraft.wiki.gg/wiki/War) states that the attack menu
 shows target difficulty, cost, timer, and the route used for the timer, and that a left click spends emeralds and starts
-the timer. The click guard therefore identifies the Attack item by its name plus price/timer or click cues; it never
+the timer. The click guard therefore identifies the Attack item by its name plus timer or click cues; it never
 assumes a fixed inventory slot.
 
 After the player queues an attack, SyllyAddons observes Wynntils' `GuildWarQueuedEvent`. Its timer is retained as
@@ -40,25 +40,21 @@ Both candidates use Track 4's versioned routing graph and research rule set:
 
 - Fastest is FIFO breadth-first search over the observed ordered topology;
 - Cheapest is the current A* research hypothesis (`1 + tax` edge weight, `distance / 12831` heuristic, FIFO ties);
-- an attack timer is modelled as one base minute plus one minute per route edge;
-- base emerald cost is `0 / 200 / 800 / 2000 / 4000` for `0 / 1 / 2 / 3 / 4+` owned territories;
-- route tax compounds across intermediate foreign territories; the HQ, own territories, and attacked target are
-  excluded.
+- an attack timer is modelled as one base minute plus one minute per route edge.
 
-The base costs, intermediate-route tax behavior, target exemption, and Cheapest/Fastest HQ-routing roles are documented
-by the [official Wynncraft Wiki](https://wynncraft.wiki.gg/wiki/War). The precise route algorithms, timer formula, API
-connection order, and unobserved diplomacy tax rates are still research assumptions. See
+The Cheapest/Fastest HQ-routing roles are documented by the
+[official Wynncraft Wiki](https://wynncraft.wiki.gg/wiki/War). The precise route algorithms, timer formula, API
+connection order, and unobserved diplomacy tax rates used to select Cheapest are still research assumptions. See
 [the Track 4 rule ledger](ROUTING_AND_ECONOMY_RULES.md).
 
-The open menu's resolved-current-mode route, timer, and cost are authoritative observations. In particular, an
-observed Cheapest route replaces the fallback-tax A* route for that attack comparison. Because public state does not
-expose the attacking guild's current diplomacy tax for every owner, the alternate cost uses the same 70% foreign-tax
-fallback as the existing observed-economy analyzer and is always labelled `estimated`.
+The open menu's resolved-current-mode route and timer are authoritative observations. In particular, an observed
+Cheapest route replaces the fallback-tax A* route for that queue-time comparison. The advisor neither parses nor
+estimates attack prices.
 
 ## Recommendation and click guard
 
 Fastest is recommended whenever its calculated queue time is at least one second shorter than Cheapest. There is no
-minimum-saving or maximum-extra-cost threshold. The estimated cost delta remains visible so the player can judge it.
+minimum-saving threshold; emerald price does not participate in the decision.
 
 **Block click when faster queuing is available** is enabled by default and can be disabled under Routing Advisor. It
 engages only when all of the following are true:
@@ -82,7 +78,7 @@ screen no longer matches, no confirmed attack click is sent.
 
 The recommendation and click guard remain unavailable if any of these are missing or inconsistent:
 
-- displayed target, cost, or timer;
+- displayed target or timer;
 - current guild or headquarters;
 - target/topology or either candidate route;
 - routing that is neither observed nor uniquely inferable;
