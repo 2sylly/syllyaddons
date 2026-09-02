@@ -62,6 +62,10 @@ public final class AttackAdvisorOverlayController {
         LOGGER.info("Attack click guard ready (screen, slot, and outgoing-packet layers)");
         ClientTickEvents.END_CLIENT_TICK.register(client -> reportPacketMixin(client));
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (screen instanceof AbstractContainerScreen<?>) {
+                ScreenMouseEvents.allowMouseClick(screen).register((ignored, event) ->
+                        allowTestMouseClick(screen, event));
+            }
             if (!isAttackScreen(screen)) return;
             ConfirmationState confirmation = new ConfirmationState();
             CONFIRMATIONS.put(screen, confirmation);
@@ -72,7 +76,7 @@ public final class AttackAdvisorOverlayController {
         });
     }
 
-    /** Arms a one-shot test that cancels the next outgoing container click packet. */
+    /** Arms a one-shot test that consumes the next container slot click before screen handling. */
     public static boolean armNextContainerClickTest() {
         Minecraft client = Minecraft.getInstance();
         if (client.getConnection() == null
@@ -85,6 +89,19 @@ public final class AttackAdvisorOverlayController {
                 TEST_CLICK_BLOCK_TIMEOUT_MILLIS / 1_000);
         notifyPlayer("[SyllyAddons] Test armed: the next container click will be blocked (60s).");
         return true;
+    }
+
+    /** Consumes the armed test click before the container screen processes mouse input. */
+    private static boolean allowTestMouseClick(Screen screen, MouseButtonEvent event) {
+        if (!(screen instanceof AbstractContainerScreen<?> container)
+                || !(screen instanceof AbstractContainerScreenAccessor position)) {
+            return true;
+        }
+        Slot slot = position.syllyaddons$getHoveredSlot(event.x(), event.y());
+        if (slot == null || !consumeTestClick("screen input", container.getMenu().containerId, slot.index)) {
+            return true;
+        }
+        return false;
     }
 
     private static void render(Screen screen, GuiGraphics graphics, ConfirmationState confirmation) {
@@ -150,6 +167,10 @@ public final class AttackAdvisorOverlayController {
             Slot slot,
             int mouseButton,
             ClickType clickType) {
+        if (slot != null && consumeTestClick(
+                "vanilla slot boundary", screen.getMenu().containerId, slot.index)) {
+            return true;
+        }
         ConfirmationState confirmation = CONFIRMATIONS.get(screen);
         if (confirmation == null) return false;
         if (confirmation.visible()) return true;
@@ -173,12 +194,6 @@ public final class AttackAdvisorOverlayController {
 
     /** Cancels the actual outgoing attack packet, including clicks sent directly by another mod. */
     public static boolean interceptContainerPacket(ServerboundContainerClickPacket packet) {
-        if (TEST_CLICK_GUARD.consume(System.currentTimeMillis())) {
-            LOGGER.info("Blocked outgoing container click packet for the one-shot self-test (container {}, slot {})",
-                    packet.containerId(), packet.slotNum());
-            notifyPlayer("[SyllyAddons] Test successful: container click blocked.");
-            return true;
-        }
         if (packetAuthorization != null && packetAuthorization.matches(packet)) {
             packetAuthorization = null;
             LOGGER.info("Allowed the explicitly confirmed attack click packet");
@@ -214,6 +229,14 @@ public final class AttackAdvisorOverlayController {
         }
         LOGGER.info("Blocked outgoing attack click packet; Fastest saves {} seconds",
                 view.advice().timeSavedSeconds());
+        return true;
+    }
+
+    private static boolean consumeTestClick(String layer, int containerId, int slotIndex) {
+        if (!TEST_CLICK_GUARD.consume(System.currentTimeMillis())) return false;
+        LOGGER.info("Blocked container click for the one-shot self-test at {} (container {}, slot {})",
+                layer, containerId, slotIndex);
+        notifyPlayer("[SyllyAddons] Test successful: Minecraft ignored the click.");
         return true;
     }
 

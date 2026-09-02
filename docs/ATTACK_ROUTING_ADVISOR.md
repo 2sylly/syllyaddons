@@ -77,9 +77,10 @@ also cancelled. The pinned live slot-13 layout is accepted as a fallback only wh
 At login, the log reports whether the packet mixin actually attached. Shift-left confirmation authorizes exactly one
 packet for the same container and slot.
 
-Settings → Routing Advisor also exposes a one-shot packet-guard self-test. Once armed, the next outgoing container
-click is cancelled regardless of its action, success is reported in local chat, and the test immediately disarms. An
-unused test expires after 60 seconds so it cannot unexpectedly affect later play.
+Settings → Routing Advisor also exposes a one-shot click-guard self-test. Once armed, the next container slot click is
+consumed before Minecraft handles it, so neither the local cursor nor the server sees the action. Success is reported
+in local chat and the test immediately disarms. An unused test expires after 60 seconds so it cannot unexpectedly
+affect later play.
 
 Changing screens invalidates the per-screen confirmation state. If the slot, item, container ID, evidence, setting, or
 screen no longer matches, no confirmed attack click is sent.

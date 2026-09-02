@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Final client-side guard immediately before a container click is sent to the server. */
+/** Client-side guard before a container slot click mutates local inventory state. */
 @Mixin(AbstractContainerScreen.class)
 public abstract class AbstractContainerScreenClickMixin {
     @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)

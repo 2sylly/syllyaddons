@@ -259,12 +259,12 @@ public final class SyllySettingsScreen extends Screen {
                         "block click faster queuing fastest cheapest confirmation attack hq");
                 addActionRow(
                         "Click-block self-test",
-                        "For 60 seconds, cancel exactly one ordinary server-menu click and confirm it in chat.",
+                        "For 60 seconds, make Minecraft ignore exactly one ordinary server-menu slot click.",
                         "Arm next click",
                         () -> status = AttackAdvisorOverlayController.armNextContainerClickTest()
                                 ? "Test armed. Open a server menu and click one harmless item."
                                 : "Test unavailable because the packet guard is not active.",
-                        "test packet click block guard one shot server menu diagnostics");
+                        "test click block guard one shot server menu diagnostics local cursor");
             }
             case OPTIMIZER -> {
                 SyllyConfig config = settings.snapshot();
