@@ -19,7 +19,8 @@ class MixinInventoryTest {
                     List.of(
                             "AbstractMapScreenAccessor",
                             "AbstractContainerScreenAccessor",
-                            "AbstractContainerScreenClickMixin"),
+                            "AbstractContainerScreenClickMixin",
+                            "ConnectionSendMixin"),
                     document.getAsJsonArray("client").asList().stream().map(value -> value.getAsString()).toList());
         }
     }

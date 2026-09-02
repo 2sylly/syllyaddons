@@ -17,6 +17,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
@@ -30,13 +31,17 @@ import net.syllyaddons.config.SyllyConfig;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.mixin.AbstractContainerScreenAccessor;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Attack-screen-only advice plus an optional explicit confirmation guard. */
 public final class AttackAdvisorOverlayController {
+    private static final Logger LOGGER = LoggerFactory.getLogger("SyllyAddons/AttackGuard");
     private static final AttackButtonDetector ATTACK_BUTTON = new AttackButtonDetector();
     private static Supplier<AttackAdvisorService> serviceSupplier;
     private static Supplier<SyllyConfigService> settingsSupplier;
     private static final WeakHashMap<Screen, ConfirmationState> CONFIRMATIONS = new WeakHashMap<>();
+    private static PacketAuthorization packetAuthorization;
     private static boolean registered;
 
     private AttackAdvisorOverlayController() {}
@@ -48,6 +53,7 @@ public final class AttackAdvisorOverlayController {
         settingsSupplier = Objects.requireNonNull(settings, "settings");
         if (registered) return;
         registered = true;
+        LOGGER.info("Attack click guard ready (screen, slot, and outgoing-packet layers)");
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (!isAttackScreen(screen)) return;
             ConfirmationState confirmation = new ConfirmationState();
@@ -111,6 +117,8 @@ public final class AttackAdvisorOverlayController {
                 attack.containerId(),
                 view.advice().headquarters(),
                 view.advice().timeSavedSeconds());
+        LOGGER.info("Blocked attack click in the screen hook; Fastest saves {} seconds",
+                view.advice().timeSavedSeconds());
         return false;
     }
 
@@ -136,6 +144,48 @@ public final class AttackAdvisorOverlayController {
                 slot.index,
                 screen.getMenu().containerId,
                 view.advice().headquarters(),
+                view.advice().timeSavedSeconds());
+        LOGGER.info("Blocked attack click at the vanilla slot boundary; Fastest saves {} seconds",
+                view.advice().timeSavedSeconds());
+        return true;
+    }
+
+    /** Cancels the actual outgoing attack packet, including clicks sent directly by another mod. */
+    public static boolean interceptContainerPacket(ServerboundContainerClickPacket packet) {
+        if (packetAuthorization != null && packetAuthorization.matches(packet)) {
+            packetAuthorization = null;
+            LOGGER.info("Allowed the explicitly confirmed attack click packet");
+            return false;
+        }
+        if (packet.buttonNum() != GLFW.GLFW_MOUSE_BUTTON_LEFT
+                || (packet.clickType() != ClickType.PICKUP && packet.clickType() != ClickType.QUICK_MOVE)) {
+            return false;
+        }
+        Screen current = Minecraft.getInstance().screen;
+        if (!(current instanceof AbstractContainerScreen<?> screen)
+                || screen.getMenu().containerId != packet.containerId()) {
+            return false;
+        }
+        int slotIndex = packet.slotNum();
+        if (slotIndex < 0 || slotIndex >= screen.getMenu().slots.size()) return false;
+        ItemStack item = screen.getMenu().slots.get(slotIndex).getItem();
+        if (item.isEmpty() || !ATTACK_BUTTON.matches(entry(item))) return false;
+
+        AttackAdvisorView view = currentView(screen);
+        if (!shouldGuard(view)) {
+            LOGGER.info("Allowed attack click packet because advice was unavailable, blocking was disabled, or Fastest did not save time");
+            return false;
+        }
+
+        ConfirmationState confirmation = CONFIRMATIONS.get(screen);
+        if (confirmation != null) {
+            confirmation.open(
+                    slotIndex,
+                    packet.containerId(),
+                    view.advice().headquarters(),
+                    view.advice().timeSavedSeconds());
+        }
+        LOGGER.info("Blocked outgoing attack click packet; Fastest saves {} seconds",
                 view.advice().timeSavedSeconds());
         return true;
     }
@@ -176,11 +226,16 @@ public final class AttackAdvisorOverlayController {
         if (slotIndex < 0 || slotIndex >= container.getMenu().slots.size()) return;
         ItemStack item = container.getMenu().slots.get(slotIndex).getItem();
         if (item.isEmpty() || !ATTACK_BUTTON.matches(entry(item))) return;
-        ContainerUtils.clickOnSlot(
-                slotIndex,
-                container.getMenu().containerId,
-                GLFW.GLFW_MOUSE_BUTTON_LEFT,
-                container.getMenu().getItems());
+        packetAuthorization = new PacketAuthorization(container.getMenu().containerId, slotIndex);
+        try {
+            ContainerUtils.clickOnSlot(
+                    slotIndex,
+                    container.getMenu().containerId,
+                    GLFW.GLFW_MOUSE_BUTTON_LEFT,
+                    container.getMenu().getItems());
+        } finally {
+            packetAuthorization = null;
+        }
     }
 
     private static AttackMenuEntry entry(ItemStack item) {
@@ -318,6 +373,14 @@ public final class AttackAdvisorOverlayController {
     }
 
     private record AttackSlot(int slotIndex, int containerId) {}
+
+    private record PacketAuthorization(int containerId, int slotIndex) {
+        private boolean matches(ServerboundContainerClickPacket packet) {
+            return packet.containerId() == containerId
+                    && packet.slotNum() == slotIndex
+                    && packet.buttonNum() == GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        }
+    }
 
     private record Bounds(int x, int y, int width, int height) {
         private int right() {

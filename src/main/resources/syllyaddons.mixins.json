@@ -5,7 +5,8 @@
   "client": [
     "AbstractMapScreenAccessor",
     "AbstractContainerScreenAccessor",
-    "AbstractContainerScreenClickMixin"
+    "AbstractContainerScreenClickMixin",
+    "ConnectionSendMixin"
   ],
   "injectors": {
     "defaultRequire": 1
