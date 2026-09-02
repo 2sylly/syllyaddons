@@ -71,6 +71,9 @@ The original click is cancelled and a modal states the exact saving. While it is
   the item is still the Attack action;
 - all other mouse clicks are consumed by the modal.
 
+The first interception uses Minecraft's own hovered-slot lookup. A second guard runs at the vanilla container-click
+boundary and cancels the click before its packet is sent if another screen hook failed to consume it.
+
 Changing screens invalidates the per-screen confirmation state. If the slot, item, container ID, evidence, setting, or
 screen no longer matches, no confirmed attack click is sent.
 

@@ -6,6 +6,7 @@ import com.wynntils.utils.wynn.ContainerUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.WeakHashMap;
 import java.util.function.Supplier;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
@@ -17,6 +18,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.syllyaddons.advisor.AttackAdvisorService;
@@ -34,6 +36,7 @@ public final class AttackAdvisorOverlayController {
     private static final AttackButtonDetector ATTACK_BUTTON = new AttackButtonDetector();
     private static Supplier<AttackAdvisorService> serviceSupplier;
     private static Supplier<SyllyConfigService> settingsSupplier;
+    private static final WeakHashMap<Screen, ConfirmationState> CONFIRMATIONS = new WeakHashMap<>();
     private static boolean registered;
 
     private AttackAdvisorOverlayController() {}
@@ -48,6 +51,7 @@ public final class AttackAdvisorOverlayController {
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (!isAttackScreen(screen)) return;
             ConfirmationState confirmation = new ConfirmationState();
+            CONFIRMATIONS.put(screen, confirmation);
             ScreenEvents.afterRender(screen).register((ignored, graphics, mouseX, mouseY, tickDelta) ->
                     render(screen, graphics, confirmation));
             ScreenMouseEvents.allowMouseClick(screen).register((ignored, event) ->
@@ -95,11 +99,8 @@ public final class AttackAdvisorOverlayController {
             return false;
         }
 
-        SyllyConfig config = settingsSupplier.get().snapshot();
         if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT
-                || !config.routingAdvisor().blockAttackWhenFastestIsFaster()
-                || !view.advice().available()
-                || view.advice().timeSavedSeconds() <= 0) {
+                || !shouldGuard(view)) {
             return true;
         }
 
@@ -111,6 +112,42 @@ public final class AttackAdvisorOverlayController {
                 view.advice().headquarters(),
                 view.advice().timeSavedSeconds());
         return false;
+    }
+
+    /** Backstop invoked at the vanilla slot-click boundary before its packet is sent. */
+    public static boolean interceptSlotClick(
+            AbstractContainerScreen<?> screen,
+            Slot slot,
+            int mouseButton,
+            ClickType clickType) {
+        ConfirmationState confirmation = CONFIRMATIONS.get(screen);
+        if (confirmation == null) return false;
+        if (confirmation.visible()) return true;
+        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT
+                || (clickType != ClickType.PICKUP && clickType != ClickType.QUICK_MOVE)) {
+            return false;
+        }
+        AttackAdvisorView view = currentView(screen);
+        if (!shouldGuard(view) || slot == null || slot.getItem().isEmpty()
+                || !ATTACK_BUTTON.matches(entry(slot.getItem()))) {
+            return false;
+        }
+        confirmation.open(
+                slot.index,
+                screen.getMenu().containerId,
+                view.advice().headquarters(),
+                view.advice().timeSavedSeconds());
+        return true;
+    }
+
+    private static boolean shouldGuard(AttackAdvisorView view) {
+        if (view == null || settingsSupplier == null) return false;
+        SyllyConfigService settings = settingsSupplier.get();
+        if (settings == null) return false;
+        SyllyConfig config = settings.snapshot();
+        return config.routingAdvisor().blockAttackWhenFastestIsFaster()
+                && view.advice().available()
+                && view.advice().timeSavedSeconds() > 0;
     }
 
     private static AttackAdvisorView currentView(Screen screen) {
@@ -127,24 +164,9 @@ public final class AttackAdvisorOverlayController {
                 || !(screen instanceof AbstractContainerScreenAccessor position)) {
             return null;
         }
-        int left = position.syllyaddons$getLeftPos();
-        int top = position.syllyaddons$getTopPos();
-        List<Slot> slots = container.getMenu().slots;
-        for (int index = 0; index < slots.size(); index++) {
-            Slot slot = slots.get(index);
-            if (!slot.isActive()
-                    || mouseX < left + slot.x
-                    || mouseX >= left + slot.x + 16
-                    || mouseY < top + slot.y
-                    || mouseY >= top + slot.y + 16) {
-                continue;
-            }
-            ItemStack item = slot.getItem();
-            if (!item.isEmpty() && ATTACK_BUTTON.matches(entry(item))) {
-                return new AttackSlot(index, container.getMenu().containerId);
-            }
-        }
-        return null;
+        Slot slot = position.syllyaddons$getHoveredSlot(mouseX, mouseY);
+        if (slot == null || slot.getItem().isEmpty() || !ATTACK_BUTTON.matches(entry(slot.getItem()))) return null;
+        return new AttackSlot(slot.index, container.getMenu().containerId);
     }
 
     private static void confirmAttack(Screen screen, ConfirmationState confirmation) {
