@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.WeakHashMap;
 import java.util.function.Supplier;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.Minecraft;
@@ -30,6 +31,7 @@ import net.syllyaddons.advisor.AttackRouteEstimate;
 import net.syllyaddons.config.SyllyConfig;
 import net.syllyaddons.config.SyllyConfigService;
 import net.syllyaddons.mixin.AbstractContainerScreenAccessor;
+import net.syllyaddons.mixin.AttackPacketGuardMarker;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ public final class AttackAdvisorOverlayController {
     private static Supplier<SyllyConfigService> settingsSupplier;
     private static final WeakHashMap<Screen, ConfirmationState> CONFIRMATIONS = new WeakHashMap<>();
     private static PacketAuthorization packetAuthorization;
+    private static boolean packetMixinReported;
     private static boolean registered;
 
     private AttackAdvisorOverlayController() {}
@@ -54,6 +57,7 @@ public final class AttackAdvisorOverlayController {
         if (registered) return;
         registered = true;
         LOGGER.info("Attack click guard ready (screen, slot, and outgoing-packet layers)");
+        ClientTickEvents.END_CLIENT_TICK.register(client -> reportPacketMixin(client));
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (!isAttackScreen(screen)) return;
             ConfirmationState confirmation = new ConfirmationState();
@@ -136,8 +140,7 @@ public final class AttackAdvisorOverlayController {
             return false;
         }
         AttackAdvisorView view = currentView(screen);
-        if (!shouldGuard(view) || slot == null || slot.getItem().isEmpty()
-                || !ATTACK_BUTTON.matches(entry(slot.getItem()))) {
+        if (!shouldGuard(view) || !isAttackAction(screen, slot)) {
             return false;
         }
         confirmation.open(
@@ -168,8 +171,8 @@ public final class AttackAdvisorOverlayController {
         }
         int slotIndex = packet.slotNum();
         if (slotIndex < 0 || slotIndex >= screen.getMenu().slots.size()) return false;
-        ItemStack item = screen.getMenu().slots.get(slotIndex).getItem();
-        if (item.isEmpty() || !ATTACK_BUTTON.matches(entry(item))) return false;
+        Slot slot = screen.getMenu().slots.get(slotIndex);
+        if (!isAttackAction(screen, slot)) return false;
 
         AttackAdvisorView view = currentView(screen);
         if (!shouldGuard(view)) {
@@ -200,6 +203,26 @@ public final class AttackAdvisorOverlayController {
                 && view.advice().timeSavedSeconds() > 0;
     }
 
+    private static boolean isAttackAction(Screen screen, Slot slot) {
+        if (slot == null || slot.getItem().isEmpty()) return false;
+        AttackMenuEntry item = entry(slot.getItem());
+        if (ATTACK_BUTTON.matches(item)) return true;
+        // The pinned live 1.21.11 attack menu exposes its action at slot 13. Keep the timer
+        // requirement so unrelated slot-13 items cannot be mistaken for an attack.
+        return isAttackScreen(screen) && slot.index == 13 && ATTACK_BUTTON.hasQueueTimer(item);
+    }
+
+    private static void reportPacketMixin(Minecraft client) {
+        if (packetMixinReported || client.getConnection() == null) return;
+        packetMixinReported = true;
+        boolean active = client.getConnection().getConnection() instanceof AttackPacketGuardMarker;
+        if (active) {
+            LOGGER.info("Outgoing attack packet guard mixin is active");
+        } else {
+            LOGGER.error("Outgoing attack packet guard mixin is NOT active");
+        }
+    }
+
     private static AttackAdvisorView currentView(Screen screen) {
         AttackAdvisorService service = serviceSupplier.get();
         SyllyConfigService settings = settingsSupplier.get();
@@ -215,7 +238,7 @@ public final class AttackAdvisorOverlayController {
             return null;
         }
         Slot slot = position.syllyaddons$getHoveredSlot(mouseX, mouseY);
-        if (slot == null || slot.getItem().isEmpty() || !ATTACK_BUTTON.matches(entry(slot.getItem()))) return null;
+        if (!isAttackAction(screen, slot)) return null;
         return new AttackSlot(slot.index, container.getMenu().containerId);
     }
 
@@ -225,7 +248,7 @@ public final class AttackAdvisorOverlayController {
         int slotIndex = confirmation.slotIndex();
         if (slotIndex < 0 || slotIndex >= container.getMenu().slots.size()) return;
         ItemStack item = container.getMenu().slots.get(slotIndex).getItem();
-        if (item.isEmpty() || !ATTACK_BUTTON.matches(entry(item))) return;
+        if (item.isEmpty() || !isAttackAction(screen, container.getMenu().slots.get(slotIndex))) return;
         packetAuthorization = new PacketAuthorization(container.getMenu().containerId, slotIndex);
         try {
             ContainerUtils.clickOnSlot(

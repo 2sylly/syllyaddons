@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Last-resort attack guard at the outgoing packet boundary. */
 @Mixin(Connection.class)
-public abstract class ConnectionSendMixin {
+public abstract class ConnectionSendMixin implements AttackPacketGuardMarker {
     @Inject(
             method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;Z)V",
             at = @At("HEAD"),

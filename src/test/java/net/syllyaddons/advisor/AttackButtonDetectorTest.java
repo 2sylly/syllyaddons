@@ -21,4 +21,10 @@ class AttackButtonDetectorTest {
         assertFalse(detector.matches(new AttackMenuEntry("Attack Route", List.of("Time to Start: 20m"))));
         assertFalse(detector.matches(new AttackMenuEntry("Emerald Treasury", List.of("Price: 62616"))));
     }
+
+    @Test
+    void exposesQueueTimerRecognitionForThePinnedLiveSlotFallback() {
+        assertTrue(detector.hasQueueTimer(new AttackMenuEntry("Rewritten action", List.of("Time to Start: 6m"))));
+        assertFalse(detector.hasQueueTimer(new AttackMenuEntry("Rewritten action", List.of("Price: 4000"))));
+    }
 }

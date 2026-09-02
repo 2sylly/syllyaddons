@@ -12,14 +12,22 @@ public final class AttackButtonDetector {
                 || name.startsWith("attack territory");
         if (!attackName) return false;
 
-        boolean hasQueueTime = false;
+        boolean hasQueueTime = hasQueueTimer(entry);
         boolean hasClickCue = false;
         for (String lore : entry.lore()) {
             String line = normalize(lore);
-            hasQueueTime |= line.contains("time to start") || line.contains("queue time") || line.contains("timer");
             hasClickCue |= line.contains("click") && (line.contains("attack") || line.contains("queue"));
         }
         return hasQueueTime || hasClickCue;
+    }
+
+    public boolean hasQueueTimer(AttackMenuEntry entry) {
+        if (entry == null) return false;
+        for (String lore : entry.lore()) {
+            String line = normalize(lore);
+            if (line.contains("time to start") || line.contains("queue time") || line.contains("timer")) return true;
+        }
+        return false;
     }
 
     private static String normalize(String value) {
